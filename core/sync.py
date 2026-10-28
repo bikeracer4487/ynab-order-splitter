@@ -7,11 +7,16 @@ the newest transaction written to YNAB, so a run handles only what earlier
 runs have not.
 """
 
+import argparse
+import contextlib
 import datetime
 import json
 import logging
+import sys
 
 from core import config, match, plugin_settings, push, review, split, user_prefs, ynab_client
+from core.main import LOG_PATH
+from plugins.orchestrator import list_plugins
 from plugins.plugin import VendorPlugin
 
 log = logging.getLogger(__name__)
@@ -253,3 +258,56 @@ def add_category(group_name: str, name: str) -> dict:
     match.fetch_categories(token, budget_id)
     log.info(f"Succeeded with adding category {group_name}: {name}.")
     return {"id": created.id, "name": created.name, "group": created.group_name}
+
+
+def main(argv: list[str]) -> int:
+    """`run.py <subcommand>`: run one step and print its result as JSON.
+    Status lines go to ynabuddy.log, and anything a step or a library
+    prints (amazon-orders' "Info:" lines) to stderr, so stdout is the JSON
+    alone. Returns 0, or 1 with "Failed <subcommand>: <reason>" on stderr."""
+    parser = argparse.ArgumentParser(prog="run.py", description="The agent-driven sync, one step at a time.")
+    commands = parser.add_subparsers(dest="command", required=True)
+    for name in ("status", "fetch", "decide", "preview", "push"):
+        command = commands.add_parser(name)
+        command.add_argument("plugin")
+    commands.choices["fetch"].add_argument("--since", type=datetime.date.fromisoformat)
+    commands.choices["decide"].add_argument("decisions", help="path of the decisions JSON file")
+    commands.choices["push"].add_argument("--yes", action="store_true", help="the user confirmed the preview")
+    add = commands.add_parser("add-category")
+    add.add_argument("--group", required=True)
+    add.add_argument("--name", required=True)
+    args = parser.parse_args(argv)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[logging.FileHandler(LOG_PATH)],
+        force=True,
+    )
+    try:
+        with contextlib.redirect_stdout(sys.stderr):
+            if args.command == "add-category":
+                result = add_category(args.group, args.name)
+            else:
+                plugin = next((p for p in list_plugins() if p.name == args.plugin), None)
+                if plugin is None:
+                    raise ValueError(f"no plugin named {args.plugin}")
+                if args.command == "status":
+                    result = status(plugin)
+                elif args.command == "fetch":
+                    result = fetch(plugin, args.since)
+                elif args.command == "decide":
+                    with open(args.decisions) as f:
+                        result = decide(plugin, json.load(f))
+                elif args.command == "preview":
+                    result = preview(plugin)
+                else:
+                    if not args.yes:
+                        raise ValueError("push needs --yes: confirm the preview with the user first")
+                    result = push_queue(plugin)
+    except Exception as e:
+        log.error(f"Failed {args.command}: {e}")
+        print(f"Failed {args.command}: {e}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, indent=2))
+    return 0

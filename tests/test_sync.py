@@ -301,3 +301,79 @@ def test_add_category_creates_it_and_refreshes_the_category_file(monkeypatch):
 
     assert sync.add_category("Needs", "Pet supplies") == {"id": "c-new", "name": "Pet supplies", "group": "Needs"}
     assert fetch_calls == [("token", "budget-1")]
+
+
+def _stub_cli(monkeypatch, tmp_path, plugin):
+    monkeypatch.setattr(sync, "list_plugins", lambda: [plugin])
+    monkeypatch.setattr(sync, "LOG_PATH", tmp_path / "ynabuddy.log")
+
+
+def test_main_prints_the_result_as_json_and_nothing_else(monkeypatch, capsys, tmp_path):
+    plugin = _plugin(tmp_path)
+    _stub_cli(monkeypatch, tmp_path, plugin)
+    monkeypatch.setattr(sync, "status", lambda plugin: {"plugin": plugin.name})
+
+    assert sync.main(["status", "amazon.com"]) == 0
+
+    out, err = capsys.readouterr()
+    assert json.loads(out) == {"plugin": "amazon.com"} and err == ""
+
+
+def test_main_fails_with_a_reason_for_an_unknown_plugin(monkeypatch, capsys, tmp_path):
+    _stub_cli(monkeypatch, tmp_path, _plugin(tmp_path))
+
+    assert sync.main(["status", "nosuch.com"]) == 1
+
+    out, err = capsys.readouterr()
+    assert out == "" and err.strip() == "Failed status: no plugin named nosuch.com"
+
+
+def test_push_needs_the_yes_flag(monkeypatch, capsys, tmp_path):
+    _stub_cli(monkeypatch, tmp_path, _plugin(tmp_path))
+    monkeypatch.setattr(sync, "push_queue", lambda plugin: (_ for _ in ()).throw(AssertionError("pushed")))
+
+    assert sync.main(["push", "amazon.com"]) == 1
+
+    assert "push needs --yes" in capsys.readouterr().err
+
+
+def test_main_routes_each_subcommand_with_its_arguments(monkeypatch, capsys, tmp_path):
+    plugin = _plugin(tmp_path)
+    _stub_cli(monkeypatch, tmp_path, plugin)
+    calls = []
+    monkeypatch.setattr(sync, "fetch", lambda plugin, since=None: calls.append(("fetch", plugin.name, since)) or {})
+    monkeypatch.setattr(sync, "decide", lambda plugin, decisions: calls.append(("decide", decisions)) or {})
+    monkeypatch.setattr(sync, "preview", lambda plugin: calls.append(("preview",)) or {})
+    monkeypatch.setattr(sync, "push_queue", lambda plugin: calls.append(("push",)) or {})
+    monkeypatch.setattr(sync, "add_category", lambda group, name: calls.append(("add-category", group, name)) or {})
+    decisions = tmp_path / "decisions.json"
+    decisions.write_text(json.dumps({"transactions": []}))
+
+    for argv in (
+        ["fetch", "amazon.com", "--since", "2026-09-01"],
+        ["decide", "amazon.com", str(decisions)],
+        ["preview", "amazon.com"],
+        ["push", "amazon.com", "--yes"],
+        ["add-category", "--group", "Needs", "--name", "Pet supplies"],
+    ):
+        assert sync.main(argv) == 0, argv
+
+    assert calls == [
+        ("fetch", "amazon.com", datetime.date(2026, 9, 1)),
+        ("decide", {"transactions": []}),
+        ("preview",),
+        ("push",),
+        ("add-category", "Needs", "Pet supplies"),
+    ]
+
+
+def test_main_keeps_a_steps_own_printing_off_stdout(monkeypatch, capsys, tmp_path):
+    plugin = _plugin(tmp_path)
+    _stub_cli(monkeypatch, tmp_path, plugin)
+    monkeypatch.setattr(sync, "status", lambda plugin: print("Info: a browser window has opened") or {"ok": True})
+
+    assert sync.main(["status", "amazon.com"]) == 0
+
+    out, err = capsys.readouterr()
+    assert json.loads(out) == {"ok": True}
+    assert "Info: a browser window has opened" in err
