@@ -86,6 +86,23 @@ def list_categories(access_token: str, budget_id: str) -> list[Category]:
     ]
 
 
+def create_category(access_token: str, budget_id: str, group_name: str, name: str) -> Category:
+    """Create category `name` in the group named `group_name`, creating
+    the group first if the budget has none by that name (not deleted, not
+    hidden). The only category write in the app: core/sync.py's
+    add-category, run only after the user approved the name and group."""
+    with _client(access_token) as client:
+        api = ynab.CategoriesApi(client)
+        groups = api.get_categories(budget_id).data.category_groups
+        group = next((g for g in groups if g.name == group_name and not g.deleted and not g.hidden), None)
+        if group is None:
+            data = ynab.PostCategoryGroupWrapper(category_group=ynab.SaveCategoryGroup(name=group_name))
+            group = api.create_category_group(budget_id, data).data.category_group
+        data = ynab.PostCategoryWrapper(category=ynab.NewCategory(name=name, category_group_id=group.id))
+        created = api.create_category(budget_id, data).data.category
+    return Category(id=str(created.id), name=created.name, group_name=group_name)
+
+
 def list_accounts(access_token: str, budget_id: str) -> list[ynab.Account]:
     """Raw SDK objects (not a wrapped dataclass) since callers typically need
     several fields (type, balance, on_budget, closed) beyond id/name --
