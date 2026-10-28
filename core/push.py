@@ -115,10 +115,14 @@ def _reason(e: Exception) -> str:
     return ynab_client.describe_api_error(e) if isinstance(e, ApiException) else str(e)
 
 
-def push_approved(path: Path, pushed_path: Path, access_token: str, budget_id: str) -> None:
+def push_approved(
+    path: Path, pushed_path: Path, access_token: str, budget_id: str, confirm: bool = True
+) -> list[str]:
     """Write the approved transactions queued at `path` for budget
-    `budget_id` (the one selected in Settings) to YNAB, after asking, and
-    remove each from the queue once YNAB confirms it. One that is deleted,
+    `budget_id` (the one selected in Settings) to YNAB, after asking (not
+    with `confirm` False: the agent-driven sync confirms in chat), and
+    remove each from the queue once YNAB confirms it. Returns the ids
+    YNAB confirmed written. One that is deleted,
     missing or already split in YNAB, or whose date, amount or categories
     changed, leaves the queue unwritten (a changed one with a message to
     match and approve it again). Entries for another budget stay queued.
@@ -132,10 +136,10 @@ def push_approved(path: Path, pushed_path: Path, access_token: str, budget_id: s
             f"select that budget in Settings to push them."
         )
     if not entries:
-        return
-    if not _confirm(len(entries)):
+        return []
+    if confirm and not _confirm(len(entries)):
         log.info(f"Not pushed: {len(entries)} approved transaction(s) stay queued in {path.name}.")
-        return
+        return []
 
     log.info(f"Attempting to push {len(entries)} transaction(s) to YNAB...")
     since = datetime.date.fromisoformat(min(e["date"] for e in entries))
@@ -147,7 +151,7 @@ def push_approved(path: Path, pushed_path: Path, access_token: str, budget_id: s
         category_ids = {c.id for c in ynab_client.list_categories(access_token, budget_id)}
     except Exception as e:  # YNAB error, offline
         log.error(f"Failed pushing to YNAB: {_reason(e)}; all {len(entries)} stay queued")
-        return
+        return []
 
     done, to_write = set(), []  # done: ids to remove from the queue
     dropped = flagged = 0
@@ -189,3 +193,4 @@ def push_approved(path: Path, pushed_path: Path, access_token: str, budget_id: s
         )
     else:
         log.info(f"Succeeded with pushing: {counts}")
+    return written

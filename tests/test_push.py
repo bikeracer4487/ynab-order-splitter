@@ -333,3 +333,33 @@ def test_batches_are_cut_by_payload_size():
 
     assert [len(b) for b in push.batches(payloads, max_bytes=2 * size)] == [2, 2, 1]
     assert [len(b) for b in push.batches(payloads, max_bytes=size - 1)] == [1] * 5
+
+
+def _raise_prompted(message, keys):
+    raise AssertionError("prompted")
+
+
+def test_push_without_confirm_never_prompts_and_returns_written_ids(queue_path, monkeypatch):
+    monkeypatch.setattr(ui, "key", _raise_prompted)
+    ynab = FakeYnab(monkeypatch, [_in_ynab("t1"), _in_ynab("t2")])
+    push.queue(queue_path, BUDGET, _matched("t1"))
+    push.queue(queue_path, BUDGET, _matched("t2"))
+
+    written = push.push_approved(
+        queue_path, queue_path.with_name("amazon.com_ynab_pushed.json"), "token", BUDGET, confirm=False
+    )
+
+    assert sorted(written) == ["t1", "t2"]
+    assert len(ynab.patches) == 1
+
+
+def test_push_returns_only_the_ids_ynab_confirmed(queue_path, monkeypatch):
+    FakeYnab(monkeypatch, [_in_ynab("t1"), _in_ynab("new-amount", amount=-3500)])
+    push.queue(queue_path, BUDGET, _matched("t1"))
+    push.queue(queue_path, BUDGET, _matched("new-amount"))
+
+    written = push.push_approved(
+        queue_path, queue_path.with_name("amazon.com_ynab_pushed.json"), "token", BUDGET, confirm=False
+    )
+
+    assert written == ["t1"]
