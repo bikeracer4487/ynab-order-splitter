@@ -6,32 +6,22 @@ file. get_data_from_JSON / get_vendor_transaction then read that file to
 match a given YNAB transaction's date and amount against a card charge, or
 failing that an order.
 
-Plugin secrets (Amazon login) live in this plugin's own
-.env file, asked for by this plugin's configure_secrets() (through
-core.ui's prompts) -- core code never reads them.
+Signing in: no Amazon password is stored. The plugin signs in with
+amazon-orders' PlaywrightBrowserLogin, which opens a **visible** browser
+window at Amazon's sign-in page; the user signs in there (password,
+one-time code, any puzzle Amazon serves), and the browser's session
+cookies become the plugin's session -- see
+https://amazon-orders.readthedocs.io/browser.html. That window needs a
+real display and a person at the keyboard, so a scrape with no saved
+session only works on a local machine, not a headless SSH session.
 
-Login can involve an interactive 2FA/OTP or CAPTCHA prompt from
-amazon-orders itself (via its default console IODefault), so
-get_data_from_vendor must be run from an interactive terminal.
-
-If Amazon serves a JavaScript/ACIC auth challenge, amazon-orders' default
-form chain can't get past it on its own (it just raises, pointing at the
-[browser] extra). AUTH_FORMS_CLASSES below registers amazon-orders'
-Playwright-based manual WAF solving for that case: PlaywrightAcicForm
-handles the ACIC challenge page headlessly, and PlaywrightManualWafForm
-opens a **visible** browser window for any embedded WAF puzzle it can't
-clear on its own, so a human can solve it -- see
-https://amazon-orders.readthedocs.io/browser.html. That visible window
-needs a real display, not just a terminal, so this path only works when
-run somewhere with one (a local machine, not a headless SSH session).
-
-Session reuse: every full login risks a WAF puzzle, 2FA prompt, or a 503
-rate-limit block from Amazon, so the session cookies are persisted to this
-plugin's own COOKIE_JAR_PATH and reused on later runs -- a fresh login only
-happens when no saved session exists or Amazon rejects the saved one. The
-session is deliberately never logged out at the end of a scrape (logging
-out clears the saved cookies). Changing credentials discards the saved
-session, since it belongs to the old login.
+Session reuse: the session cookies are persisted to this plugin's own
+COOKIE_JAR_PATH and reused on later runs -- the sign-in window only opens
+when no saved session exists or Amazon rejects the saved one. The session
+is deliberately never logged out at the end of a scrape (logging out
+clears the saved cookies). If Amazon serves a JavaScript/ACIC challenge
+during a scrape, AUTH_FORMS_CLASSES below has amazon-orders resolve it in
+a headless browser.
 
 Two kinds of vendor data are scraped into ORDER_DATA_PATH:
   - orders: order history with full details (items, tax, shipping,
@@ -57,19 +47,19 @@ from collections.abc import Collection
 from pathlib import Path
 
 from amazonorders.conf import AmazonOrdersConfig
+from amazonorders.contrib.browser.playwright import PlaywrightBrowserLogin
 from amazonorders.exception import AmazonOrdersAuthRedirectError
 from amazonorders.orders import AmazonOrders
 from amazonorders.session import AmazonSession
 from amazonorders.transactions import AmazonTransactions
 
-from core import config, ui
+from core import ui
 from core.milliunits import dollars_to_milliunits
 from plugins.plugin import Setting, VendorLineItem, VendorPlugin, VendorTransaction
 
 log = logging.getLogger(__name__)
 
 PLUGIN_DIR = Path(__file__).resolve().parent
-ENV_PATH = PLUGIN_DIR / ".env"
 ORDER_DATA_PATH = PLUGIN_DIR / "amazon.com_order_data.json"
 PREFS_PATH = PLUGIN_DIR / "amazon.com_user_prefs.json"
 # Persisted amazon-orders session cookies -- as sensitive as the password
@@ -83,22 +73,16 @@ COOKIE_JAR_PATH = PLUGIN_DIR / ".amazon_cookies.json"
 AMAZONORDERS_CONFIG_PATH = PLUGIN_DIR / ".amazonorders_config.yml"
 # Where debug-mode HTML/screenshot snapshots go (gitignored).
 DEBUG_OUTPUT_DIR = PLUGIN_DIR.parent.parent / "output"
-# How long a visible Playwright window waits for a human to solve a WAF
-# puzzle -- the amazon-orders default (30s) is too short in practice.
+# How long a headless browser gets to resolve a JavaScript challenge served
+# during a scrape -- the amazon-orders default (30s) is too short in practice.
 BROWSER_TIMEOUT_SECONDS = 180
+# How long the sign-in window stays open for the user to sign in.
+SIGN_IN_TIMEOUT_SECONDS = 300
 
-AMAZON_USERNAME_KEY = "AMAZON_USERNAME"
-AMAZON_PASSWORD_KEY = "AMAZON_PASSWORD"
-# Optional: the secret key Amazon shows when manually adding a 2FA authenticator
-# app. Lets amazon-orders auto-solve OTP challenges instead of prompting
-# interactively. Same env var name amazon-orders itself reads, so it's
-# recognized even without being passed explicitly -- see AmazonSession.
-AMAZON_OTP_SECRET_KEY = "AMAZON_OTP_SECRET_KEY"
-
-# See the module docstring's note on manual WAF solving.
+# See the module docstring's note on challenges during a scrape.
 AUTH_FORMS_CLASSES = [
     "amazonorders.contrib.browser.playwright.PlaywrightAcicForm",
-    "amazonorders.contrib.browser.playwright.PlaywrightManualWafForm",
+    "amazonorders.contrib.browser.playwright.PlaywrightJSAuthForm",
 ]
 
 # Amazon-specific prefs only; the shared ones (YNAB mapping, run mode)
@@ -162,8 +146,13 @@ def _charge_to_dict(transaction) -> dict:
     as "" -- normalized to None so they can't be mistaken for one shared
     order. A Whole Foods charge's order number starts as its receipt UUID,
     until _link_whole_foods finds its order. amazon-orders has no pending
-    flag; the charge's text says "Pending"."""
-    text = transaction.parsed.get_text(" ", strip=True)
+    flag; the charge's text says "Pending".
+
+    amazon-orders 5 reads amazon.com's history as data, not HTML, so such
+    a charge has no row text (`parsed` is None): its seller, Amazon's
+    statement descriptor, is what is left of it. Other sites' rows are
+    still HTML."""
+    text = transaction.parsed.get_text(" ", strip=True) if transaction.parsed is not None else transaction.seller or ""
     match = None if transaction.order_number else RECEIPT_RE.search(text)
     receipt = match.group(1) if match else None
     return {
@@ -310,44 +299,21 @@ class AmazonPlugin(VendorPlugin):
     _order_data_mtime: int | None = None
 
     def settings(self) -> list[Setting]:
-        username, password, _ = self._credentials()
+        signed_in = self._new_session().auth_cookies_stored()
         debug = "on" if self.load_own_prefs()["debug"] else "off"
         return [
             Setting(
-                "Credentials", username or "not set", self.configure_secrets, missing=not (username and password)
+                "Amazon sign-in",
+                "signed in" if signed_in else "not signed in",
+                self.configure_sign_in,
+                missing=not signed_in,
             ),
             Setting("Debug snapshots", debug, self.configure_debug),
         ]
 
-    def configure_secrets(self) -> None:
-        print("Enter your Amazon.com login.")
-        username = ui.text("Amazon email:", validate=lambda s: bool(s.strip()) or "Required.")
-        if username is None:
-            return
-        password = ui.secret("Amazon password:")
-        if password is None:
-            return
-
-        print(
-            "\nOptional: 2FA authenticator app secret key, to auto-solve OTP "
-            "prompts during login (shown by Amazon when you set up an\n"
-            "authenticator app under Login & Security -> 2-Step Verification "
-            "-> Authenticator app -> \"Can't scan the QR code?\").\n"
-            "Leave blank to skip -- amazon-orders will just prompt for the "
-            "OTP code interactively during login instead."
-        )
-        otp_secret_key = ui.secret("OTP secret key (optional):", required=False)
-        if otp_secret_key is None:
-            return
-
-        config.set_env_var(AMAZON_USERNAME_KEY, username.strip(), ENV_PATH)
-        config.set_env_var(AMAZON_PASSWORD_KEY, password.strip(), ENV_PATH)
-        if otp_secret_key.strip():
-            config.set_env_var(AMAZON_OTP_SECRET_KEY, otp_secret_key.strip(), ENV_PATH)
-
-        # Any saved session belongs to the previous login.
-        COOKIE_JAR_PATH.unlink(missing_ok=True)
-        log.info("Amazon credentials saved.")
+    def configure_sign_in(self) -> None:
+        print("A browser window will open at Amazon's sign-in page. Sign in there; the session is saved for later runs.")
+        self._sign_in(self._new_session())
 
     def configure_debug(self) -> None:
         prefs = self.load_own_prefs()
@@ -362,52 +328,43 @@ class AmazonPlugin(VendorPlugin):
         self.save_own_prefs(prefs)
         log.info(f"Amazon debug snapshots {'on' if debug else 'off'}.")
 
-    def _credentials(self) -> tuple[str | None, str | None, str | None]:
-        """(username, password, OTP secret key) from this plugin's .env;
-        None for any that aren't set."""
-        return (
-            config.get_env_var(AMAZON_USERNAME_KEY, ENV_PATH),
-            config.get_env_var(AMAZON_PASSWORD_KEY, ENV_PATH),
-            config.get_env_var(AMAZON_OTP_SECRET_KEY, ENV_PATH),
-        )
-
-    def _open_session(self) -> AmazonSession:
-        """An authenticated session: the saved one if there is one, else a
-        fresh login (see the module docstring's note on session reuse)."""
-        username, password, otp_secret_key = self._credentials()
-        if not username or not password:
-            raise RuntimeError("Amazon credentials not set. Set them under Settings -> Plugins -> amazon.com.")
-        debug = self.load_own_prefs()["debug"]
+    def _new_session(self) -> AmazonSession:
+        """A session over the saved cookies (if any); not yet checked."""
         # amazon-orders rewrites the cookie file in place, which keeps its
         # permissions, but creates it with default (world-readable) ones.
         # Create it first, readable by this user only.
         if not COOKIE_JAR_PATH.exists():
             COOKIE_JAR_PATH.write_text("{}")
         COOKIE_JAR_PATH.chmod(0o600)
-        session = AmazonSession(
-            username=username,
-            password=password,
-            otp_secret_key=otp_secret_key,
-            config=_amazon_config(),
-            debug=debug,
-        )
+        return AmazonSession(config=_amazon_config(), debug=self.load_own_prefs()["debug"])
+
+    @staticmethod
+    def _sign_in(session: AmazonSession) -> None:
+        """Sign `session` in through a visible browser window (see the
+        module docstring); the session cookies are saved for later runs."""
+        log.info("Attempting Amazon sign-in: a browser window is opening, sign in to Amazon there...")
+        PlaywrightBrowserLogin(session).login(timeout=SIGN_IN_TIMEOUT_SECONDS)
+        log.info("Succeeded with Amazon sign-in: session saved.")
+
+    def _open_session(self) -> AmazonSession:
+        """An authenticated session: the saved one if there is one, else a
+        browser sign-in (see the module docstring's note on session reuse)."""
+        session = self._new_session()
         if session.auth_cookies_stored():
             log.info("Reusing saved Amazon session.")
             session.is_authenticated = True
         else:
-            log.info("Logging in to Amazon...")
-            session.login()
+            self._sign_in(session)
         return session
 
-    @staticmethod
-    def _with_reauth(session: AmazonSession, fetch):
-        """Run `fetch()`, logging in again and retrying once if Amazon
+    def _with_reauth(self, session: AmazonSession, fetch):
+        """Run `fetch()`, signing in again and retrying once if Amazon
         rejects the (saved) session partway through."""
         try:
             return fetch()
         except AmazonOrdersAuthRedirectError:
-            log.info("Saved Amazon session expired; logging in again...")
-            session.login()
+            log.info("Saved Amazon session expired; signing in again...")
+            self._sign_in(session)
             return fetch()
 
     def get_data_from_vendor(self, date: datetime.date | None = None) -> None:
@@ -502,7 +459,7 @@ class AmazonPlugin(VendorPlugin):
                 while True:
                     page = self._with_reauth(
                         session,
-                        lambda: AmazonOrders(session).get_order_history(
+                        lambda: AmazonOrders(session).get_orders(
                             time_filter=time_filter, full_details=True, keep_paging=False, start_index=count
                         ),
                     )

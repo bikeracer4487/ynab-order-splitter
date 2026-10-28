@@ -84,7 +84,7 @@ flowchart TD
 
     settings -- "1 YNAB" --> ynabmenu["Change token /<br/>change budget (a new one clears account-mode<br/>plugins' accounts and the tax category,<br/>refetches categories, then asks the missing settings)"]
     settings -- "2 Plugins" --> pluglist["Pick plugin"]
-    pluglist --> plugmenu["Mapping · Match window · Run mode<br/>then the plugin's own settings<br/>(Amazon: Credentials · Debug snapshots)"]
+    pluglist --> plugmenu["Mapping · Match window · Run mode<br/>then the plugin's own settings<br/>(Amazon: Amazon sign-in · Debug snapshots)"]
     settings -- "3 Display" --> display["Colours: Auto (match the terminal) / Dark / Light"]
     display --> settings
     settings -- "4 AI agent" --> ai["Off / Claude / OpenAI / Gemini<br/>asks for a missing key; cancel leaves AI off;<br/>then pick a model from the provider's list<br/>(Back keeps it; a new provider starts on its default)"]
@@ -198,10 +198,11 @@ classDiagram
 
     class AmazonPlugin {
         scrapes_vendor_data = True
-        settings() Credentials, Debug snapshots
-        configure_secrets()
+        settings() Amazon sign-in, Debug snapshots
+        configure_sign_in()
         configure_debug()
-        _credentials()
+        _new_session()
+        _sign_in(session) browser window
         _open_session()
         _with_reauth(session, fetch)
         _load_order_data() cached in memory
@@ -247,8 +248,7 @@ gitignored.
 flowchart LR
     subgraph secrets["Secrets (mode 600)"]
         coreenv["core/.env<br/>YNAB token, AI provider keys"]
-        amzenv["plugins/amazon.com/.env<br/>Amazon login, OTP secret"]
-        cookies["plugins/amazon.com/<br/>.amazon_cookies.json"]
+        cookies["plugins/amazon.com/<br/>.amazon_cookies.json<br/>Amazon session (browser sign-in)"]
     end
 
     subgraph state["Prefs and cached data (JSON)"]
@@ -269,7 +269,7 @@ flowchart LR
         snapshots["output/<br/>Amazon debug snapshots"]
     end
 
-    config["core/config.py"] <--> coreenv & amzenv
+    config["core/config.py"] <--> coreenv
     userprefs["core/user_prefs.py"] <--> up
     matchpy["core/match.py"] <--> cats & results
     matchpy --> pushed

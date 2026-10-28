@@ -8,7 +8,7 @@ dependencies = [
     "ynab",
     "python-dotenv",
     "anthropic",
-    "amazon-orders[browser]>=4.8.0",
+    "amazon-orders[browser]>=5.2.0,<6",
     "questionary>=2.1.1",
     "tabulate>=0.10.0",
     "openai>=3.26.0",

@@ -60,8 +60,9 @@ class _FakeCharge:
 
 
 class _FakeAmazonSession:
-    """Records login/logout calls; `saved_session` controls whether a
-    persisted session is reported as present."""
+    """Records sign-in/logout calls; `saved_session` controls whether a
+    persisted session is reported as present. The password login
+    (`login`) must never be used: signing in happens in a browser window."""
 
     def __init__(self, saved_session=False):
         self.saved_session = saved_session
@@ -72,11 +73,27 @@ class _FakeAmazonSession:
         return self.saved_session
 
     def login(self):
-        self.calls.append("login")
-        self.is_authenticated = True
+        raise AssertionError("password login used; sign-in must go through the browser")
 
     def logout(self):
         self.calls.append("logout")
+
+
+def _fake_browser_login_cls(sessions: list | None = None):
+    """A PlaywrightBrowserLogin stand-in: records "browser login" on the
+    session it signs in (and the session into `sessions`)."""
+
+    class _FakeBrowserLogin:
+        def __init__(self, session):
+            self.session = session
+            if sessions is not None:
+                sessions.append(session)
+
+        def login(self, timeout=300):
+            self.session.calls.append("browser login")
+            self.session.is_authenticated = True
+
+    return _FakeBrowserLogin
 
 
 def _fake_amazon_transactions_cls(charges: list, calls: list | None = None):
@@ -115,8 +132,8 @@ def _stub_scrape(module, monkeypatch, session, orders_by_filter, charges=None, t
     """Wire up fakes for a get_data_from_vendor() call on `today`; returns
     the list the fake AmazonOrders records each requested time_filter into."""
     _freeze_today(module, monkeypatch, today)
-    monkeypatch.setattr(module.AmazonPlugin, "_credentials", lambda self: ("user", "pass", None))
     monkeypatch.setattr(module, "AmazonSession", lambda **kwargs: session)
+    monkeypatch.setattr(module, "PlaywrightBrowserLogin", _fake_browser_login_cls())
     monkeypatch.setattr(module, "AmazonTransactions", _fake_amazon_transactions_cls(charges or []))
     calls = []
     monkeypatch.setattr(module, "AmazonOrders", _fake_amazon_orders_cls(orders_by_filter, calls))
@@ -138,7 +155,7 @@ def _fake_amazon_orders_cls(orders_by_filter: dict, calls: list, start_indexes: 
         def __init__(self, session):
             pass
 
-        def get_order_history(self, time_filter=None, full_details=True, keep_paging=True, start_index=None):
+        def get_orders(self, time_filter=None, full_details=True, keep_paging=True, start_index=None):
             assert not keep_paging
             start_index = start_index or 0
             if start_index == 0:
@@ -268,16 +285,20 @@ def test_get_data_from_vendor_reuses_saved_session_without_logging_in(amazon_mod
     assert session.calls == []
 
 
-def test_get_data_from_vendor_logs_in_without_saved_session_and_never_logs_out(amazon_module, monkeypatch):
+def test_get_data_from_vendor_signs_in_through_the_browser_without_saved_session_and_never_logs_out(
+    amazon_module, monkeypatch
+):
     session = _FakeAmazonSession(saved_session=False)
     _stub_scrape(amazon_module, monkeypatch, session, {})
 
     amazon_module.AmazonPlugin().get_data_from_vendor()
 
-    assert session.calls == ["login"]
+    assert session.calls == ["browser login"]
 
 
-def test_get_data_from_vendor_logs_in_again_when_saved_session_is_rejected(amazon_module, monkeypatch):
+def test_get_data_from_vendor_signs_in_again_through_the_browser_when_saved_session_is_rejected(
+    amazon_module, monkeypatch
+):
     session = _FakeAmazonSession(saved_session=True)
     _stub_scrape(amazon_module, monkeypatch, session, {})
     attempts = []
@@ -286,7 +307,7 @@ def test_get_data_from_vendor_logs_in_again_when_saved_session_is_rejected(amazo
         def __init__(self, session):
             pass
 
-        def get_order_history(self, time_filter=None, full_details=True, keep_paging=True, start_index=None):
+        def get_orders(self, time_filter=None, full_details=True, keep_paging=True, start_index=None):
             if start_index:
                 return []
             attempts.append(time_filter)
@@ -298,7 +319,7 @@ def test_get_data_from_vendor_logs_in_again_when_saved_session_is_rejected(amazo
 
     amazon_module.AmazonPlugin().get_data_from_vendor()
 
-    assert session.calls == ["login"]
+    assert session.calls == ["browser login"]
     assert attempts == ["year-2026", "year-2026"]
     assert [o["order_number"] for o in _saved(amazon_module)["orders"]] == ["111-1111111"]
 
@@ -381,7 +402,7 @@ def test_failed_year_keeps_newer_years_and_they_are_skipped_next_run(amazon_modu
         def __init__(self, session):
             pass
 
-        def get_order_history(self, time_filter=None, full_details=True, keep_paging=True, start_index=None):
+        def get_orders(self, time_filter=None, full_details=True, keep_paging=True, start_index=None):
             if time_filter == "year-2024":
                 raise RuntimeError("Amazon is down")
             year = int(time_filter.removeprefix("year-"))
@@ -467,16 +488,36 @@ def test_load_order_data_reads_legacy_bare_order_list(amazon_module):
     assert data["charges"] == []
 
 
-def test_configure_secrets_discards_saved_session(amazon_module, monkeypatch, tmp_path):
-    monkeypatch.setattr(amazon_module, "ENV_PATH", tmp_path / ".env")
-    amazon_module.COOKIE_JAR_PATH.write_text("{}")
-    monkeypatch.setattr(amazon_module.ui, "text", lambda *a, **k: "me@example.com")
-    secrets = iter(["hunter2", ""])
-    monkeypatch.setattr(amazon_module.ui, "secret", lambda *a, **k: next(secrets))
+def test_sign_in_setting_is_missing_until_a_session_is_saved(amazon_module, monkeypatch):
+    monkeypatch.setattr(amazon_module, "AmazonSession", lambda **kwargs: _FakeAmazonSession(saved_session=False))
+    assert amazon_module.AmazonPlugin().settings()[0].missing
 
-    amazon_module.AmazonPlugin().configure_secrets()
+    monkeypatch.setattr(amazon_module, "AmazonSession", lambda **kwargs: _FakeAmazonSession(saved_session=True))
+    assert not amazon_module.AmazonPlugin().settings()[0].missing
 
-    assert not amazon_module.COOKIE_JAR_PATH.exists()
+
+def test_configure_sign_in_signs_in_through_the_browser(amazon_module, monkeypatch):
+    session = _FakeAmazonSession(saved_session=True)
+    monkeypatch.setattr(amazon_module, "AmazonSession", lambda **kwargs: session)
+    monkeypatch.setattr(amazon_module, "PlaywrightBrowserLogin", _fake_browser_login_cls())
+
+    amazon_module.AmazonPlugin().settings()[0].change()
+
+    assert session.calls == ["browser login"]
+
+
+def test_charge_read_as_data_has_no_row_text_and_takes_whole_foods_from_its_seller(amazon_module):
+    # amazon-orders 5 builds amazon.com charges from Amazon's data, not HTML:
+    # `parsed` is None and the seller is Amazon's statement descriptor.
+    charge = _FakeCharge("", datetime.date(2026, 8, 10), -31.20, payment_method="Visa ****1234")
+    charge.parsed = None
+    charge.seller = "Whole Foods SPP 00000"
+
+    saved = amazon_module._charge_to_dict(charge)
+
+    assert (saved["order_number"], saved["receipt"], saved["is_whole_foods"], saved["pending"]) == (
+        None, None, True, False
+    )
 
 
 def test_charge_without_order_number_is_stored_as_none(amazon_module):
@@ -602,7 +643,7 @@ def test_missing_orders_are_looked_up_once_and_failures_retried(amazon_module, m
         def __init__(self, session):
             pass
 
-        def get_order_history(self, **kwargs):
+        def get_orders(self, **kwargs):
             return []
 
         def get_order(self, order_id):

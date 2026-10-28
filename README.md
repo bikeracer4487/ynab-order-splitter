@@ -46,7 +46,7 @@ Costco receipt exports.
 
 ```
 uv sync
-uv run playwright install chromium   # amazon-orders' browser login fallback
+uv run playwright install chromium   # the Amazon sign-in window
 uv run python run.py
 ```
 
@@ -56,7 +56,9 @@ its imports (`from core import ...`) only resolve with the project root on
 
 The first run asks for the YNAB token and a budget, then each plugin's
 required settings (for Amazon: which YNAB account(s) hold Amazon
-transactions, and the Amazon login). For Costco, save each
+transactions, then a browser window opens at Amazon's sign-in page -- sign
+in there, and the session is saved for later runs; no Amazon password is
+stored). For Costco, save each
 Costco-Receipt-Downloader export (`costco-receipts-<FROM>_to_<TO>.json`)
 into `plugins/costco.com/`; new exports are merged into what's already
 there. Changing the budget later clears the
@@ -85,8 +87,8 @@ request -- or browser launch -- fail the test.
 
 All per-install and gitignored:
 
-- Secrets: `core/.env` (YNAB token, AI keys), `plugins/<plugin>/.env` (vendor
-  login), the Amazon session cookies -- readable by your user only.
+- Secrets: `core/.env` (YNAB token, AI keys) and the Amazon session cookies
+  (`plugins/amazon.com/.amazon_cookies.json`) -- readable by your user only.
 - Settings: `core/user_prefs.json`, `plugins/<plugin>/<plugin>_user_prefs.json`.
 - Data: `core/ynab_categories.json` (the budget's categories),
   `plugins/amazon.com/amazon.com_order_data.json` (scraped orders and

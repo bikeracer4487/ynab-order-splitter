@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -8,7 +8,7 @@ resolution-markers = [
 
 [[package]]
 name = "amazon-orders"
-version = "4.8.0"
+version = "5.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -19,9 +19,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/50/ed/c3b37ccd5dfca06b32f804f28821c28f2720ce91f4ea908ab3f93b5ff2df/amazon_orders-4.8.0.tar.gz", hash = "sha256:f62d4b533968fd5fd8c851fd9b4a6d0ad4b051ae2a6dfaa4dedb08d7bf48826b", size = 81902, upload-time = "2026-10-09T21:14:01.228Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/eb/0ecfc42783474bfaae1eab68c886f1e4bf874d199823c477b16cde457f31/amazon_orders-5.2.0.tar.gz", hash = "sha256:6f7c3fa8b561cd38074a97f9938be3a5f1d2564bbb177eff313d1523c71457d0", size = 112201, upload-time = "2026-10-25T22:10:34.737Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/3c/f770f32e9849a60a208b93ee51e15fb5fea1838d9f5d769341d9000d26e7/amazon_orders-4.8.0-py3-none-any.whl", hash = "sha256:7a9a01db09e640f80ca9694650fa2cc5ee159bda3022580006b317b7bebe9897", size = 85342, upload-time = "2026-10-09T21:13:59.952Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/94/afe7b7ce5b9a5ba746bb45725aaeee35a5634c3a102c552b63d344b842b1/amazon_orders-5.2.0-py3-none-any.whl", hash = "sha256:a0c806089931d3b5cea2ebaeba723708c58fcbac75ba251c904d9d625bcb4950", size = 117822, upload-time = "2026-10-25T22:10:33.208Z" },
 ]
 
 [package.optional-dependencies]
@@ -1301,7 +1301,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "amazon-orders", extras = ["browser"], specifier = ">=4.8.0" },
+    { name = "amazon-orders", extras = ["browser"], specifier = ">=5.2.0,<6" },
     { name = "anthropic" },
     { name = "google-genai", specifier = ">=2.28.0" },
     { name = "openai", specifier = ">=3.26.0" },
