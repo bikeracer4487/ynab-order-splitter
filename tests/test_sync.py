@@ -377,3 +377,16 @@ def test_main_keeps_a_steps_own_printing_off_stdout(monkeypatch, capsys, tmp_pat
     out, err = capsys.readouterr()
     assert json.loads(out) == {"ok": True}
     assert "Info: a browser window has opened" in err
+
+
+def test_decide_refuses_a_whole_transaction_category_for_a_transaction_with_split_lines(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+
+    result = sync.decide(plugin, {"transactions": [{"id": "t1", "approve": True, "category_id": "home"}]})
+
+    assert result["invalid"] == [{"id": "t1", "line": None, "category_id": "home"}]
+    assert result["applied"] == 0 and result["queued"] == []
+    lines = json.loads(plugin.matched_path.read_text())["transactions"][0]["split_lines"]
+    assert [line["category_id"] for line in lines] == [None, None]
+    assert not plugin.categories_path.exists() or json.loads(plugin.categories_path.read_text()) == {}

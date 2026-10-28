@@ -195,8 +195,9 @@ an untracked `.claude/skills/sync/SKILL.md` on this install invokes it so
    would go in and the items it would take.
 4. Asks the user all collected questions in one message where possible,
    each with the item, amount, order date, and Claude's best guesses.
-   Ambiguous matches are questions too: which of the fitting charges is
-   it, or skip. A proposed new category the user accepts, by name and
+   Ambiguous matches are questions too: approve the closest-dated record
+   the match took, or skip the transaction (v1 surfaces only that
+   record; picking among the fitting records is a later addition). A proposed new category the user accepts, by name and
    group, Claude creates with `add-category`, then re-runs `fetch`
    (which refetches categories) and continues.
 5. Writes the decisions file, runs `decide`, then `preview`, and shows
@@ -246,10 +247,11 @@ zero to two questions.
   ask for is against CLAUDE.md's rules (my call).
 - **A scrape failure is reported inside a successful `fetch`.** As in the
   console cycle, matching goes on with the data on disk; `fetch` exits 0
-  and its output carries a `scrape` block: `ok` or `failed` with the
-  reason, and the date the data on file reaches. The procedure has
-  Claude tell the user about a failed scrape before any question, and
-  not ask about transactions dated after the data on file (my call).
+  and its output carries a `scrape` block: `ok`, `failed` with the
+  reason, or `skipped`. The procedure has Claude tell the user about a
+  failed scrape before any question and go on only if they say so (my
+  call; the SDK has no way for a plugin to say how far its data on file
+  reaches, so that date is not reported).
 
 ## Left to the builder
 

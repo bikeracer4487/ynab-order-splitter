@@ -50,9 +50,10 @@ Amazon sign-in notice) to stderr. A failure exits 1 with
      `order_number` and `split_lines`. A line with `category_id` already
      set came from the plugin's item-to-category table (an earlier
      answer): it needs no decision. `ambiguous` means more than one
-     vendor record fit and the closest-dated one was taken: that is a
-     question for the user (approve it, or skip it). `unmatched` ones
-     are reported and left alone.
+     vendor record fit and the closest-dated one was taken (`fetch`
+     shows only that one): that is a question for the user, approve
+     that record or skip the transaction. `unmatched` ones are reported
+     and left alone.
    - `categories`: the budget's categories, `id` and `label`
      ("Group: Name"). Only these ids may be used.
 
@@ -66,8 +67,9 @@ Amazon sign-in notice) to stderr. A failure exits 1 with
 
 4. **Ask the user** everything collected, in one message where possible:
    each question with the item, amount, order date and Claude's best
-   guesses; each ambiguous match with the two candidates' dates; each
-   proposed category with its group and items. For a proposed category
+   guesses; each ambiguous match with the matched record's order number
+   and date, to approve or skip; each proposed category with its group
+   and items. For a proposed category
    the user accepts, run
    `add-category --group "<group>" --name "<name>"` with the name and
    group they approved, then run `fetch` again (it refetches the

@@ -139,7 +139,8 @@ def decide(plugin: VendorPlugin, decisions: dict) -> dict:
     per split line with who chose it, or one for the whole transaction when
     there is nothing to split, and whether to approve) to the last fetch's
     results, as approving on the review screen would: a category not in
-    the budget is refused, an approved transaction with a line still
+    the budget is refused (so is a whole-transaction category for a
+    transaction that has split lines), an approved transaction with a line still
     uncategorized is left undecided, an approved one is queued for push
     and a declined one taken out of the queue. Saves the results and the
     plugin's item -> category table."""
@@ -153,9 +154,12 @@ def decide(plugin: VendorPlugin, decisions: dict) -> dict:
         if t is None:
             unknown.append(decision["id"])
             continue
-        lines = decision.get("lines", [])
-        if "category_id" in decision:  # nothing to split: the whole transaction's category
-            lines = [{"line": 0, "category_id": decision["category_id"], "by": decision.get("by", "agent")}]
+        lines = list(decision.get("lines", []))
+        if "category_id" in decision:  # the whole transaction's category: only with nothing to split
+            if t["split_lines"]:
+                invalid.append({"id": t["id"], "line": None, "category_id": decision["category_id"]})
+            else:
+                lines.append({"line": 0, "category_id": decision["category_id"], "by": decision.get("by", "agent")})
         for line in lines:
             if line["category_id"] not in names:
                 invalid.append({"id": t["id"], "line": line["line"], "category_id": line["category_id"]})
