@@ -55,14 +55,14 @@ ynabuddy.log
 # a copy of real categories at the repo root (was used by the deleted testbed demos)
 /ynab_categories.json
 
-# Personal, not published: the user's own tools (with their data and ids)
-# and the AI workflow (CLAUDE.md, STANDARDS.md, agents, hooks and settings,
-# task briefs, orchestration log, release files for the public repo,
-# the plan and the spec)
-/devtools/
-/orchestration/
+# Claude Code configuration is per-install and never published
 /.claude/
 /CLAUDE.md
+
+# Private tooling and notes from the parent repo (not in this fork, but
+# kept ignored so they never land in the public repository if added)
+/devtools/
+/orchestration/
 /STANDARDS.md
 /release/
 /PLAN.md
