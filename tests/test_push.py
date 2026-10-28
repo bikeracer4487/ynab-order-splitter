@@ -171,6 +171,7 @@ def test_payload_approves_and_splits_by_the_reviewed_lines(queue_path, monkeypat
     ("none", None, [None, None], None),
     ("order", ORDER, [None, None], ORDER),
     ("items", None, ["Mop", "Tea"], "Mop"),
+    ("both", ORDER, ["Mop", "Tea"], f"{ORDER}: Mop"),
 ])
 def test_memos_follow_the_setting(queue_path, monkeypatch, memos, parent, line_memos, one_line):
     user_prefs.save_user_prefs({"memos": memos})

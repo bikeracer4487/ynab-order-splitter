@@ -65,21 +65,22 @@ def _payload(entry: dict, current, memos: str) -> dict:
     an entry queued by an older version is ignored. Memos by `memos`
     (Settings > Memos): "order" puts the order number on the transaction,
     "items" each line's item name on that line (on the transaction for one
-    line), but none on a merged line; a memo already on the transaction in
-    YNAB is kept."""
+    line), but none on a merged line; "both" does both (one line:
+    "order number: item"); a memo already on the transaction in YNAB is
+    kept."""
     payload = {"id": entry["id"], "approved": True}
     # Item names stay whole in the queue (the category table's key); YNAB gets the first 50 characters.
     lines = [
         {"amount": line["amount"], "category_id": line["category_id"]}
-        | ({"memo": line["memo"][:MEMO_LENGTH]} if memos == "items" and "items" not in line else {})
+        | ({"memo": line["memo"][:MEMO_LENGTH]} if memos in ("items", "both") and "items" not in line else {})
         for line in entry["split_lines"]
     ]
-    memo = entry.get("order_number") if memos == "order" else None  # entries queued before memos have none
+    memo = entry.get("order_number") if memos in ("order", "both") else None  # entries queued before memos have none
     if len(lines) > 1:
         payload["subtransactions"] = lines
     elif lines:
         payload["category_id"] = lines[0]["category_id"]
-        memo = memo or lines[0].get("memo")
+        memo = ": ".join(filter(None, (memo, lines[0].get("memo")))) or None
     else:
         payload["category_id"] = entry["category_id"]
     if memo and not current.memo:

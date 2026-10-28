@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- **Memos: order number and item names** -- a fourth choice under
+  Settings > Memos puts the order number on the transaction and each
+  item's name on its split line; a one-line transaction gets
+  "order number: item".
 - **Claude Code can run the cycle** -- `run.py status / fetch / decide /
   preview / push <plugin>` are the Match and Split steps as
   non-interactive commands printing JSON, for Claude Code to drive:

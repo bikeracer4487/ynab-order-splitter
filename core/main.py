@@ -137,6 +137,7 @@ MEMO_CHOICES = [
     ("None", "none"),
     ("Order number, on the transaction", "order"),
     ("Item names", "items"),
+    ("Order number and item names", "both"),
 ]
 
 

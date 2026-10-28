@@ -29,8 +29,9 @@ What it does today (v1.2.1; changes in `CHANGELOG.md`):
 - **AI suggestions (optional)**: Claude, OpenAI or Gemini suggest categories
   for new items in the background; you approve every one.
 - **Memos**: Settings > Memos picks what goes into YNAB memos: none, the
-  order number on the transaction (default), or item names. A memo already
-  in YNAB is never overwritten.
+  order number on the transaction (default), item names, or both (the
+  order number on the transaction, item names on its lines). A memo
+  already in YNAB is never overwritten.
 - **Push**: approved splits are written to the budget selected in Settings,
   after a y/n prompt and a check that nothing changed in YNAB meanwhile.
   Split lines get no payee of their own; YNAB shows them under the

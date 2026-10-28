@@ -28,7 +28,9 @@ DEFAULT_PREFS: dict[str, Any] = {
     # terminal's background), "dark" or "light". Settings > Display.
     "colours": "auto",
     # What push writes to YNAB memos: "none", "order" (the order number on
-    # the transaction) or "items" (each split line's item name). A memo
+    # the transaction), "items" (each split line's item name) or "both"
+    # (the order number on the transaction and the item names on its
+    # lines; on a one-line transaction "order number: item"). A memo
     # already in YNAB is never overwritten. Settings > Memos.
     "memos": "order",
     # AI categorization: on/off, the provider (a key of

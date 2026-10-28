@@ -91,7 +91,7 @@ flowchart TD
     display --> settings
     settings -- "4 AI agent" --> ai["Off / Claude / OpenAI / Gemini<br/>asks for a missing key; cancel leaves AI off;<br/>then pick a model from the provider's list<br/>(Back keeps it; a new provider starts on its default)"]
     ai --> settings
-    settings -- "5 Memos" --> memos["What push writes to YNAB memos:<br/>None / Order number (default) / Item names"]
+    settings -- "5 Memos" --> memos["What push writes to YNAB memos:<br/>None / Order number (default) / Item names / Order number and item names"]
     memos --> settings
     settings -- "0" --> mm
     ynabmenu --> settings
@@ -170,7 +170,7 @@ sequenceDiagram
     Q->>Y: list_transactions(since earliest queued date), list_categories()
     Q->>Y: get_transaction(id) for each queued one not in that list
     Q->>Q: deleted / missing / already split: dropped from the queue;<br/>date or amount changed, or a category gone: flagged, leaves the queue
-    Q->>Y: update_transactions(batch) -- one PATCH per ≤ 500 KB of JSON:<br/>approved + subtransactions (amount, category, memo; no payee),<br/>or one line: approved + its category, or approved + whole category;<br/>never a payee_id, even from an entry queued before [p] was removed; memos by Settings > Memos:<br/>order number on the transaction, or item names (not a merged line's),<br/>or none; a memo already in YNAB is never overwritten
+    Q->>Y: update_transactions(batch) -- one PATCH per ≤ 500 KB of JSON:<br/>approved + subtransactions (amount, category, memo; no payee),<br/>or one line: approved + its category, or approved + whole category;<br/>never a payee_id, even from an entry queued before [p] was removed; memos by Settings > Memos:<br/>order number on the transaction, or item names (not a merged line's),<br/>or both (one line: "order number: item"), or none; a memo already in YNAB is never overwritten
     Y-->>Q: ids saved → removed from the queue, added to amazon.com_ynab_pushed.json;<br/>an error keeps the rest (one bad item fails its whole PATCH, nothing saved)
 ```
 
