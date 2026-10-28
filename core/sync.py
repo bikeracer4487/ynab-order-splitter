@@ -179,3 +179,44 @@ def decide(plugin: VendorPlugin, decisions: dict) -> dict:
         "applied": applied, "queued": queued, "skipped": skipped, "undecided": undecided,
         "invalid": invalid, "unknown_ids": unknown,
     }
+
+
+def preview(plugin: VendorPlugin) -> dict:
+    """The push plan: every approved transaction queued for the selected
+    budget, with its lines and their category labels -- what the user
+    confirms before `push`."""
+    budget_id = user_prefs.load_user_prefs()["ynab_budget_id"]
+    names = _names()
+    queued = json.loads(plugin.approved_path.read_text()) if plugin.approved_path.exists() else []
+    entries = [
+        {
+            "id": e["id"],
+            "date": e["date"],
+            "amount": e["amount"],
+            "order_number": e.get("order_number"),
+            "category": names.get(e["category_id"]) if not e["split_lines"] else None,
+            "lines": [
+                {"memo": line["memo"], "amount": line["amount"], "category": names.get(line["category_id"])}
+                for line in e["split_lines"]
+            ],
+        }
+        for e in push.for_budget(queued, budget_id)
+    ]
+    return {"budget_id": budget_id, "count": len(entries), "entries": entries}
+
+
+def push_queue(plugin: VendorPlugin) -> dict:
+    """Write the queue to YNAB (core/push.py, no prompt: the user confirmed
+    the preview in chat) and move the mark to the newest date among the
+    transactions written."""
+    token, budget_id = _budget()
+    queued = json.loads(plugin.approved_path.read_text()) if plugin.approved_path.exists() else []
+    entries = push.for_budget(queued, budget_id)
+    written = push.push_approved(plugin.approved_path, plugin.pushed_path, token, budget_id, confirm=False)
+    mark = load_mark(plugin)["last_pushed_date"]
+    dates = [e["date"] for e in entries if e["id"] in written]
+    if dates:
+        mark = max([mark, *dates]) if mark else max(dates)
+    save_mark(plugin, mark)
+    log.info(f"Succeeded with sync push: {len(written)} written, mark {mark}")
+    return {"pushed": written, "not_pushed": len(entries) - len(written), "mark": mark}

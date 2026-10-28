@@ -200,3 +200,70 @@ def test_decide_skips_and_unqueues_a_declined_transaction_and_reports_unknown_id
 
     assert result["skipped"] == ["t2"] and result["unknown_ids"] == ["nope"]
     assert json.loads(plugin.approved_path.read_text()) == []
+
+
+def _queue_entry(id, date, budget_id="budget-1", lines=(("Mop", -2000, "home"), ("Tea", -1000, "food")), category_id=None):
+    return {
+        "id": id, "budget_id": budget_id, "date": date, "amount": sum(a for _, a, _ in lines) or -500,
+        "split_lines": [{"memo": m, "amount": a, "category_id": c} for m, a, c in lines],
+        "category_id": category_id, "order_number": "111-1111111",
+    }
+
+
+def test_preview_lists_the_queue_for_the_budget_with_category_labels(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+    monkeypatch.setattr(sync.user_prefs, "load_user_prefs", lambda: dict(CORE_PREFS))
+    plugin.approved_path.write_text(json.dumps([
+        _queue_entry("e1", "2026-09-10"),
+        _queue_entry("e2", "2026-09-11", budget_id="budget-2"),
+        _queue_entry("e3", "2026-09-12", lines=(), category_id="home"),
+    ]))
+
+    result = sync.preview(plugin)
+
+    assert result["budget_id"] == "budget-1" and result["count"] == 2
+    assert [e["id"] for e in result["entries"]] == ["e1", "e3"]
+    assert result["entries"][0]["lines"] == [
+        {"memo": "Mop", "amount": -2000, "category": "Needs: Household"},
+        {"memo": "Tea", "amount": -1000, "category": "Needs: Groceries"},
+    ]
+    assert result["entries"][0]["order_number"] == "111-1111111"
+    assert result["entries"][1]["lines"] == [] and result["entries"][1]["category"] == "Needs: Household"
+
+
+def _stub_push(monkeypatch, written):
+    recorded = {}
+
+    def push_approved(path, pushed_path, token, budget_id, confirm=True):
+        recorded.update(path=path, budget_id=budget_id, confirm=confirm)
+        return written
+
+    monkeypatch.setattr(sync.push, "push_approved", push_approved)
+    monkeypatch.setattr(sync.config, "get_ynab_access_token", lambda: "token")
+    monkeypatch.setattr(sync.user_prefs, "load_user_prefs", lambda: dict(CORE_PREFS))
+    return recorded
+
+
+def test_push_queue_pushes_without_prompting_and_advances_the_mark_to_the_newest_written_date(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    plugin.approved_path.write_text(json.dumps([
+        _queue_entry("e1", "2026-10-01"), _queue_entry("e2", "2026-10-20"), _queue_entry("e3", "2026-10-25"),
+    ]))
+    recorded = _stub_push(monkeypatch, ["e1", "e2"])
+
+    result = sync.push_queue(plugin)
+
+    assert recorded["confirm"] is False and recorded["budget_id"] == "budget-1"
+    assert result == {"pushed": ["e1", "e2"], "not_pushed": 1, "mark": "2026-10-20"}
+    assert sync.load_mark(plugin)["last_pushed_date"] == "2026-10-20"
+
+
+def test_push_queue_keeps_the_mark_when_nothing_was_written(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    plugin.approved_path.write_text(json.dumps([_queue_entry("e1", "2026-10-01")]))
+    sync.save_mark(plugin, "2026-09-30")
+    _stub_push(monkeypatch, [])
+
+    assert sync.push_queue(plugin)["mark"] == "2026-09-30"
+    assert sync.load_mark(plugin)["last_pushed_date"] == "2026-09-30"
