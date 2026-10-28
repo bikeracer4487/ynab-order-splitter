@@ -267,3 +267,37 @@ def test_push_queue_keeps_the_mark_when_nothing_was_written(tmp_path, monkeypatc
 
     assert sync.push_queue(plugin)["mark"] == "2026-09-30"
     assert sync.load_mark(plugin)["last_pushed_date"] == "2026-09-30"
+
+
+from plugins.plugin import Setting
+
+
+def test_status_reports_missing_settings_the_mark_and_the_queue(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path, prefs={"mode": "payee", "payee_name": "Amazon.com"})
+    monkeypatch.setattr(sync.user_prefs, "load_user_prefs", lambda: dict(CORE_PREFS))
+    monkeypatch.setattr(sync.plugin_settings, "all_settings", lambda plugin: [
+        Setting("Amazon sign-in", "not signed in", lambda: None, missing=True),
+        Setting("Run mode", "unapproved", lambda: None),
+    ])
+    plugin.approved_path.write_text(json.dumps([_queue_entry("e1", "2026-10-01"), _queue_entry("e2", "2026-10-02", budget_id="budget-2")]))
+
+    result = sync.status(plugin)
+
+    assert result["plugin"] == "amazon.com" and result["budget"] == "Plan"
+    assert result["missing_settings"] == ["Amazon sign-in"] and result["setup_complete"] is False
+    assert result["mapping"] == "payee search -- 'Amazon.com'"
+    assert result["mark"]["last_pushed_date"] is None and result["queued"] == 1
+
+
+def test_add_category_creates_it_and_refreshes_the_category_file(monkeypatch):
+    monkeypatch.setattr(sync.config, "get_ynab_access_token", lambda: "token")
+    monkeypatch.setattr(sync.user_prefs, "load_user_prefs", lambda: dict(CORE_PREFS))
+    monkeypatch.setattr(
+        sync.ynab_client, "create_category",
+        lambda token, budget_id, group, name: Category("c-new", name, group),
+    )
+    fetch_calls = []
+    monkeypatch.setattr(sync.match, "fetch_categories", lambda token, budget_id: fetch_calls.append((token, budget_id)))
+
+    assert sync.add_category("Needs", "Pet supplies") == {"id": "c-new", "name": "Pet supplies", "group": "Needs"}
+    assert fetch_calls == [("token", "budget-1")]

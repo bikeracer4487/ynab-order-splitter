@@ -220,3 +220,36 @@ def push_queue(plugin: VendorPlugin) -> dict:
     save_mark(plugin, mark)
     log.info(f"Succeeded with sync push: {len(written)} written, mark {mark}")
     return {"pushed": written, "not_pushed": len(entries) - len(written), "mark": mark}
+
+
+def status(plugin: VendorPlugin) -> dict:
+    """Where things stand before a run: the budget, the plugin's settings
+    still missing (an Amazon sign-in, say), its mapping, the mark, and
+    how many approved transactions are queued for the budget."""
+    core_prefs = user_prefs.load_user_prefs()
+    budget_id = core_prefs["ynab_budget_id"]
+    settings = plugin_settings.all_settings(plugin)
+    missing = [s.label for s in settings if s.missing]
+    queued = json.loads(plugin.approved_path.read_text()) if plugin.approved_path.exists() else []
+    return {
+        "plugin": plugin.name,
+        "budget": core_prefs["ynab_budget_name"],
+        "budget_id": budget_id,
+        "setup_complete": not missing,
+        "missing_settings": missing,
+        "mapping": plugin_settings._mapping_text(plugin_settings.load(plugin)),
+        "mark": load_mark(plugin),
+        "queued": len(push.for_budget(queued, budget_id)),
+    }
+
+
+def add_category(group_name: str, name: str) -> dict:
+    """Create category `name` in group `group_name` in the selected budget
+    (the only category write in the app; run only after the user approved
+    that name and group in chat) and refresh the categories file."""
+    token, budget_id = _budget()
+    log.info(f"Attempting to add category {group_name}: {name} to YNAB...")
+    created = ynab_client.create_category(token, budget_id, group_name, name)
+    match.fetch_categories(token, budget_id)
+    log.info(f"Succeeded with adding category {group_name}: {name}.")
+    return {"id": created.id, "name": created.name, "group": created.group_name}
