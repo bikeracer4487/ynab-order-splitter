@@ -66,18 +66,19 @@ def prefill(transaction: dict, table: dict[str, dict], names: dict[str, str]) ->
             line["category_id"] = category_id
 
 
-def set_category(transaction: dict, line_number: int, category_id: str, table: dict[str, dict]) -> None:
+def set_category(transaction: dict, line_number: int, category_id: str, table: dict[str, dict], by: str = "user") -> None:
     """Give split line `line_number` (from 1) `category_id` and write it to
     `table` for that line's description (not for the sales tax line, a
-    line with none or a merged line), set by the user. A transaction with
-    nothing to split gets the category as a whole."""
+    line with none or a merged line), set `by` the user (or the agent, in
+    the agent-driven sync). A transaction with nothing to split gets the
+    category as a whole."""
     if not transaction["split_lines"]:
         transaction["review_category_id"] = category_id
         return
     line = transaction["split_lines"][line_number - 1]
     line["category_id"] = category_id
     if line["memo"] not in categorize.NOT_ITEMS and "items" not in line:
-        table[line["memo"]] = {"category": category_id, "by": "user"}
+        table[line["memo"]] = {"category": category_id, "by": by}
 
 
 def missing_categories(transaction: dict, names: dict[str, str]) -> str | None:

@@ -725,3 +725,12 @@ def test_quit_on_an_approved_one_puts_back_its_edit_so_saved_and_queued_agree(tm
     [entry] = _queued(tmp_path)
     assert first["split_lines"] == entry["split_lines"]
     assert entry["split_lines"][0]["category_id"] == "supplies"
+
+
+def test_set_category_records_who_chose():
+    t = {"split_lines": [{"memo": "Mop", "amount": -1000, "category_id": None}]}
+    table = {}
+
+    review.set_category(t, 1, "supplies", table, by="agent")
+
+    assert table == {"Mop": {"category": "supplies", "by": "agent"}}

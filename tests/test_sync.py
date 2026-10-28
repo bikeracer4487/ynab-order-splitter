@@ -113,3 +113,90 @@ def test_fetch_prefills_categories_from_the_plugin_table(tmp_path, monkeypatch):
     assert result["categories"] == [{"id": "food", "label": "Needs: Groceries"}, {"id": "home", "label": "Needs: Household"}]
     saved = json.loads(plugin.matched_path.read_text())["transactions"][0]["split_lines"]
     assert saved[0]["category_id"] == "food"  # prefill persisted for decide
+
+
+def _matched_file(plugin, monkeypatch, tmp_path):
+    """A fetched results file: t1 split into Mop and Tea, t2 with nothing
+    to split; the category file with food and home."""
+    monkeypatch.setattr(sync.match, "CATEGORIES_PATH", tmp_path / "ynab_categories.json")
+    sync.match.CATEGORIES_PATH.write_text(json.dumps({
+        "budget_id": "budget-1",
+        "categories": [{"id": c.id, "name": c.name, "group_name": c.group_name} for c in CATEGORIES],
+    }))
+    plugin.matched_path.write_text(json.dumps({
+        "budget_id": "budget-1",
+        "transactions": [
+            {
+                "id": "t1", "date": "2026-09-10", "amount": -3000, "match_status": "matched", "match_reason": None,
+                "vendor_match": {"source_id": "111-1111111"}, "split_status": "exact", "split_reason": None,
+                "split_lines": [
+                    {"amount": -2000, "memo": "Mop", "category_id": None},
+                    {"amount": -1000, "memo": "Tea", "category_id": None},
+                ],
+            },
+            {
+                "id": "t2", "date": "2026-09-11", "amount": -500, "match_status": "matched", "match_reason": None,
+                "vendor_match": {"source_id": "222-2222222"}, "split_status": "nothing to split",
+                "split_reason": "no line items", "split_lines": [],
+            },
+        ],
+    }))
+
+
+def test_decide_applies_lines_queues_the_approved_transaction_and_records_who_chose(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+
+    result = sync.decide(plugin, {"transactions": [{"id": "t1", "approve": True, "lines": [
+        {"line": 1, "category_id": "home", "by": "agent"}, {"line": 2, "category_id": "food", "by": "user"}]}]})
+
+    assert result["queued"] == ["t1"] and result["applied"] == 2
+    assert json.loads(plugin.categories_path.read_text()) == {
+        "Mop": {"category": "home", "by": "agent"}, "Tea": {"category": "food", "by": "user"}}
+    assert [e["id"] for e in json.loads(plugin.approved_path.read_text())] == ["t1"]
+    assert json.loads(plugin.matched_path.read_text())["transactions"][0]["review_status"] == "approved"
+
+
+def test_decide_leaves_a_transaction_with_an_uncategorized_line_unqueued(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+
+    result = sync.decide(plugin, {"transactions": [{"id": "t1", "approve": True, "lines": [
+        {"line": 1, "category_id": "home", "by": "agent"}]}]})
+
+    assert result["queued"] == []
+    assert result["undecided"] == [{"id": "t1", "missing": "row(s) 2"}]
+    assert not plugin.approved_path.exists()
+
+
+def test_decide_rejects_a_category_id_not_in_the_budget(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+
+    result = sync.decide(plugin, {"transactions": [{"id": "t1", "approve": True, "lines": [
+        {"line": 1, "category_id": "gone", "by": "agent"}, {"line": 2, "category_id": "food", "by": "agent"}]}]})
+
+    assert result["invalid"] == [{"id": "t1", "line": 1, "category_id": "gone"}]
+    assert result["queued"] == []
+    assert "Mop" not in json.loads(plugin.categories_path.read_text())
+
+
+def test_decide_categorizes_a_transaction_with_nothing_to_split_as_a_whole(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+
+    result = sync.decide(plugin, {"transactions": [{"id": "t2", "approve": True, "category_id": "home"}]})
+
+    assert result["queued"] == ["t2"]
+    assert json.loads(plugin.approved_path.read_text())[0]["category_id"] == "home"
+
+
+def test_decide_skips_and_unqueues_a_declined_transaction_and_reports_unknown_ids(tmp_path, monkeypatch):
+    plugin = _plugin(tmp_path)
+    _matched_file(plugin, monkeypatch, tmp_path)
+    sync.decide(plugin, {"transactions": [{"id": "t2", "approve": True, "category_id": "home"}]})
+
+    result = sync.decide(plugin, {"transactions": [{"id": "t2", "approve": False, "reason": "ambiguous"}, {"id": "nope", "approve": True}]})
+
+    assert result["skipped"] == ["t2"] and result["unknown_ids"] == ["nope"]
+    assert json.loads(plugin.approved_path.read_text()) == []

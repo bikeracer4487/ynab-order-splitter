@@ -121,3 +121,61 @@ def fetch(plugin: VendorPlugin, since: datetime.date | None = None) -> dict:
         "transactions": transactions,
         "counts": counts,
     }
+
+
+def _names() -> dict[str, str]:
+    """id -> "Group: Name" from the categories file the last fetch wrote."""
+    saved = json.loads(match.CATEGORIES_PATH.read_text())
+    return {c["id"]: f"{c['group_name']}: {c['name']}" for c in saved["categories"]}
+
+
+def decide(plugin: VendorPlugin, decisions: dict) -> dict:
+    """Apply `decisions` (docs/agent-sync.md: per transaction id, a category
+    per split line with who chose it, or one for the whole transaction when
+    there is nothing to split, and whether to approve) to the last fetch's
+    results, as approving on the review screen would: a category not in
+    the budget is refused, an approved transaction with a line still
+    uncategorized is left undecided, an approved one is queued for push
+    and a declined one taken out of the queue. Saves the results and the
+    plugin's item -> category table."""
+    data = json.loads(plugin.matched_path.read_text())
+    by_id = {t["id"]: t for t in data["transactions"]}
+    names = _names()
+    table = json.loads(plugin.categories_path.read_text()) if plugin.categories_path.exists() else {}
+    applied, queued, skipped, undecided, invalid, unknown = 0, [], [], [], [], []
+    for decision in decisions["transactions"]:
+        t = by_id.get(decision["id"])
+        if t is None:
+            unknown.append(decision["id"])
+            continue
+        lines = decision.get("lines", [])
+        if "category_id" in decision:  # nothing to split: the whole transaction's category
+            lines = [{"line": 0, "category_id": decision["category_id"], "by": decision.get("by", "agent")}]
+        for line in lines:
+            if line["category_id"] not in names:
+                invalid.append({"id": t["id"], "line": line["line"], "category_id": line["category_id"]})
+                continue
+            review.set_category(t, line["line"], line["category_id"], table, by=line["by"])
+            applied += 1
+        if not decision["approve"]:
+            t["review_status"] = "skipped"
+            push.unqueue(plugin.approved_path, t["id"])
+            skipped.append(t["id"])
+            continue
+        missing = review.missing_categories(t, names)
+        if missing:
+            undecided.append({"id": t["id"], "missing": missing})
+            continue
+        t["review_status"] = "approved"
+        push.queue(plugin.approved_path, data["budget_id"], t)
+        queued.append(t["id"])
+    plugin.matched_path.write_text(json.dumps(data, indent=2))
+    plugin.categories_path.write_text(json.dumps(table, indent=2))
+    log.info(
+        f"Succeeded with sync decide: {applied} line(s) categorized, {len(queued)} queued, {len(skipped)} skipped, "
+        f"{len(undecided)} undecided, {len(invalid)} invalid, {len(unknown)} unknown"
+    )
+    return {
+        "applied": applied, "queued": queued, "skipped": skipped, "undecided": undecided,
+        "invalid": invalid, "unknown_ids": unknown,
+    }
