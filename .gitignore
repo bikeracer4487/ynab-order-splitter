@@ -4,7 +4,7 @@ plugins/*/.env
 # Persisted vendor login sessions (e.g. plugins/amazon.com/.amazon_cookies.json)
 plugins/*/.*_cookies.json
 
-# Backups made by devtools/reset-to-fresh.py -- still secrets
+# Backups of the secrets files -- still secrets
 .env.bak
 plugins/*/.env.bak
 
