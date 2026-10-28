@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **Amazon sign-in happens in a browser window; no Amazon password is
+  stored** -- the Amazon plugin's "Credentials" setting is now "Amazon
+  sign-in": it opens a browser window at Amazon's sign-in page, you sign
+  in there (password, one-time code, any puzzle), and the session is
+  saved for later runs. The old password login could not get past
+  Amazon's current sign-in challenges. `plugins/amazon.com/.env` is no
+  longer read and can be deleted.
+- **amazon-orders 5.2** -- Amazon changed its transaction history page,
+  which amazon-orders 4.8 could no longer read; 5.2 reads it again.
+
+### Fixed
+- **Categories no longer vanish when YNAB flags every group as internal** --
+  since October 2026 the YNAB API reports `internal: true` on every
+  category group, user-made ones included, so the category list came back
+  empty and there was nothing to categorize against. The two YNAB-managed
+  groups ("Internal Master Category", "Credit Card Payments") are now
+  excluded by name instead of by that flag.
+
 ## 1.2.1 -- 2026-10-20
 
 ### Fixed

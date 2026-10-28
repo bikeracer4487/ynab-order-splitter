@@ -62,11 +62,16 @@ def list_budgets(access_token: str) -> list[Budget]:
     return [Budget(id=str(plan.id), name=plan.name) for plan in response.data.plans]
 
 
+YNAB_MANAGED_GROUPS = ("Internal Master Category", "Credit Card Payments")
+
+
 def list_categories(access_token: str, budget_id: str) -> list[Category]:
     """Flatten every budget/group into a single list of selectable categories.
 
-    Internal groups ("Internal Master Category", "Credit Card Payments") are
-    YNAB-managed and not valid categorization targets, so they're excluded.
+    The YNAB-managed groups "Internal Master Category" and "Credit Card
+    Payments" are not valid categorization targets, so they're excluded by
+    name: since October 2026 the API reports every group as `internal`,
+    user-made ones included, so that flag can't decide it.
     Hidden categories, and every category in a hidden group, are left out
     too: hidden is a flag on each category and group, not a group of its own.
     """
@@ -75,7 +80,7 @@ def list_categories(access_token: str, budget_id: str) -> list[Category]:
     return [
         Category(id=str(c.id), name=c.name, group_name=group.name)
         for group in response.data.category_groups
-        if not group.deleted and not group.internal and not group.hidden
+        if not group.deleted and not group.hidden and group.name not in YNAB_MANAGED_GROUPS
         for c in group.categories
         if not c.deleted and not c.hidden
     ]
