@@ -111,8 +111,9 @@ def _vendor_transaction_dict(vendor_transaction: VendorTransaction) -> dict:
     return d
 
 
-def _refresh_vendor_data(plugin: VendorPlugin, candidates: list, margin_days: int) -> None:
+def _refresh_vendor_data(plugin: VendorPlugin, candidates: list, margin_days: int) -> str | None:
     """If `plugin` scrapes its own vendor data, refresh it before matching.
+    Returns the reason a scrape failed, None when it succeeded or wasn't needed.
 
     Looks back `margin_days` before the earliest candidate transaction's
     YNAB date -- vendor orders are typically placed before the bank posts
@@ -123,13 +124,15 @@ def _refresh_vendor_data(plugin: VendorPlugin, candidates: list, margin_days: in
     data is already on disk.
     """
     if not plugin.scrapes_vendor_data or not candidates:
-        return
+        return None
     label = plugin.name
     lookback_date = min(t.var_date for t in candidates) - datetime.timedelta(days=margin_days)
     try:
         plugin.get_data_from_vendor(lookback_date)
     except Exception as e:
         log.warning(f"Failed {label} vendor data refresh: {e}; using existing vendor data.")
+        return str(e)
+    return None
 
 
 def match_transactions_for_plugin(
@@ -157,8 +160,19 @@ def match_transactions_for_plugin(
         f"Succeeded with YNAB transactions: {len(candidates)} candidate(s) for {plugin.name} "
         f"(run mode {run_mode}), earliest {earliest}"
     )
+    return match_candidates(budget_id, plugin, candidates, run_mode, vendor_lookback_margin_days, window_days)[0]
 
-    _refresh_vendor_data(plugin, candidates, vendor_lookback_margin_days)
+
+def match_candidates(
+    budget_id: str, plugin: VendorPlugin, candidates: list, run_mode: str, vendor_lookback_margin_days: int, window_days: int
+) -> tuple[Path, str | None]:
+    """Refresh `plugin`'s vendor data if it scrapes one, match each of
+    `candidates` (YNAB transactions) to a vendor record (one record per
+    transaction at most), and overwrite plugin.matched_path with the
+    results, recorded as a `run_mode` run. If the plugin fails partway,
+    the results so far are still saved. Returns the results file's path
+    and the reason the scrape failed (None if it didn't)."""
+    scrape_error = _refresh_vendor_data(plugin, candidates, vendor_lookback_margin_days)
 
     log.info(f"Attempting to match {len(candidates)} transaction(s) to {plugin.name} records...")
     records = []
@@ -182,7 +196,7 @@ def match_transactions_for_plugin(
         "fetched_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "budget_id": budget_id,
         "plugin": plugin.name,
-        "mode": prefs.get("mode"),
+        "mode": plugin_settings.load(plugin).get("mode"),
         "run_mode": run_mode,
         "transactions": records,
     }
@@ -191,13 +205,13 @@ def match_transactions_for_plugin(
         log.error(
             f"Failed matching: {error!r}; saved {len(records)} of {len(candidates)} result(s) to {results_path.name}"
         )
-        return results_path
+        return results_path, scrape_error
     counts = collections.Counter(r["match_status"] for r in records)
     log.info(
         f"Succeeded with matching: {counts['matched']} matched, {counts['ambiguous']} ambiguous, "
         f"{counts['unmatched']} unmatched (saved to {results_path.name})"
     )
-    return results_path
+    return results_path, scrape_error
 
 
 def run_cycle_for_plugin(plugin: VendorPlugin) -> None:

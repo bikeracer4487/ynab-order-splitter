@@ -332,3 +332,39 @@ def test_review_last_results_reviews_the_plugins_matched_file(monkeypatch, tmp_p
 
     assert reviewed == [FakePlugin.matched_path]
     assert pushed == [(plugin.approved_path, "budget-1")]
+
+
+def test_refresh_vendor_data_returns_the_scrape_failure_reason():
+    candidates = [FakeTransaction("t1", datetime.date(2026, 8, 1), -1000)]
+    failing = FakePlugin(scrape_error=RuntimeError("Amazon down"))
+    failing.scrapes_vendor_data = True
+    working = FakePlugin()
+    working.scrapes_vendor_data = True
+
+    assert match._refresh_vendor_data(failing, candidates, margin_days=7) == "Amazon down"
+    assert match._refresh_vendor_data(working, candidates, margin_days=7) is None
+
+
+def test_match_candidates_writes_results_and_reports_the_scrape_failure(monkeypatch, tmp_path):
+    monkeypatch.setattr(FakePlugin, "matched_path", tmp_path / "amazon.com_ynab_matched.json")
+    t1 = FakeTransaction("t1", datetime.date(2026, 1, 10), -5000)
+    vendor_txn = VendorTransaction(
+        date=datetime.date(2026, 1, 10),
+        amount=-5000,
+        record_id="r1",
+        line_items=[VendorLineItem(description="Widget", amount=5000)],
+    )
+    plugin = FakePlugin(
+        prefs={"mode": "payee", "payee_name": "Amazon.com"},
+        vendor_transactions=[vendor_txn],
+        scrape_error=RuntimeError("Amazon down"),
+    )
+    plugin.scrapes_vendor_data = True
+
+    path, reason = match.match_candidates("budget-1", plugin, [t1], "sync", 7, 5)
+
+    data = json.loads(path.read_text())
+    assert reason == "Amazon down"
+    assert data["run_mode"] == "sync"
+    assert data["mode"] == "payee"
+    assert [t["match_status"] for t in data["transactions"]] == ["matched"]
