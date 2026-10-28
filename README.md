@@ -64,6 +64,19 @@ into `plugins/costco.com/`; new exports are merged into what's already
 there. Changing the budget later clears the
 plugin accounts and asks for the new budget's.
 
+## Letting Claude Code run it
+
+The whole cycle can be driven from Claude Code instead of the menus:
+"sync my Amazon transactions with YNAB" has Claude run
+`run.py status / fetch / decide / preview / push`, categorize the split
+lines from your categories, ask you only about items it can't place,
+ambiguous matches and categories you may be missing (it creates one with
+`run.py add-category` once you've approved the name), show you the full
+list of changes and write them after a single yes. Each subcommand prints
+JSON; the procedure Claude follows is `docs/agent-sync.md`. A per-plugin
+mark (`plugins/<plugin>/<plugin>_sync.json`) records the newest
+transaction written, so later runs handle only what is new.
+
 ## Screenshots
 
 The review screen: one transaction, its split lines and the keys.
@@ -97,5 +110,6 @@ All per-install and gitignored:
   results and review progress), `plugins/<plugin>/<plugin>_ynab_approved.json`
   (approved, waiting to be pushed), `plugins/<plugin>/<plugin>_ynab_pushed.json`
   (ids already pushed, which the all-transactions run mode skips),
-  `plugins/<plugin>/<plugin>_categories.json` (item -> category table).
+  `plugins/<plugin>/<plugin>_categories.json` (item -> category table),
+  `plugins/<plugin>/<plugin>_sync.json` (the agent-driven sync's mark).
 - Status log: `ynabuddy.log`; Amazon debug snapshots (off by default): `output/`.

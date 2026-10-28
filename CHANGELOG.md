@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+- **Claude Code can run the cycle** -- `run.py status / fetch / decide /
+  preview / push <plugin>` are the Match and Split steps as
+  non-interactive commands printing JSON, for Claude Code to drive:
+  "sync my Amazon transactions with YNAB" fetches, scrapes, matches and
+  splits, Claude categorizes from your categories and asks you only
+  about what it can't place, you confirm the full list once, and it
+  pushes. `run.py add-category --group --name` creates a category you
+  approved. A per-plugin mark (`plugins/<plugin>/<plugin>_sync.json`)
+  records the newest transaction written, so a later run handles only
+  what is new. The procedure is `docs/agent-sync.md`.
+
 ### Changed
 - **Amazon sign-in happens in a browser window; no Amazon password is
   stored** -- the Amazon plugin's "Credentials" setting is now "Amazon

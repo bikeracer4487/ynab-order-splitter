@@ -13,6 +13,7 @@ modules (`config`, `ui`, `milliunits`).
 ```mermaid
 flowchart TD
     run["run.py"] --> main["core/main.py"]
+    run -- "subcommands" --> sync["core/sync.py<br/>agent-driven sync, JSON out"]
 
     subgraph core["core/"]
         main
@@ -21,7 +22,7 @@ flowchart TD
         match["match.py"]
         split["split.py<br/>split lines (dry run)"]
         review["review.py<br/>review screen, queues approvals"]
-        push["push.py<br/>the only YNAB writes"]
+        push["push.py<br/>YNAB transaction writes"]
         ps["plugin_settings.py<br/>shared plugin settings"]
         config["config.py<br/>.env secrets"]
         prefs["user_prefs.py"]
@@ -39,6 +40,7 @@ flowchart TD
     end
 
     main --> agents & config & match & ps & push & wizard & ui & prefs & yc & orch
+    sync --> config & match & ps & push & review & split & prefs & yc & orch & sdk
     agents --> config
     cat --> agents & config & prefs
     wizard --> config & ui & prefs & yc
@@ -179,7 +181,7 @@ classDiagram
     class VendorPlugin {
         <<abstract>>
         name, description, url
-        prefs_path, categories_path, matched_path, approved_path, pushed_path, default_prefs
+        prefs_path, categories_path, matched_path, approved_path, pushed_path, sync_path, default_prefs
         scrapes_vendor_data = False
         settings() list~Setting~
         load_own_prefs()
@@ -260,6 +262,7 @@ flowchart LR
         results["plugins/amazon.com/<br/>amazon.com_ynab_matched.json<br/>match results + proposed splits + review"]
         approved["plugins/amazon.com/<br/>amazon.com_ynab_approved.json<br/>approved, waiting to be pushed to YNAB"]
         pushed["plugins/amazon.com/<br/>amazon.com_ynab_pushed.json<br/>ids pushed to YNAB, skipped by nonsplit"]
+        mark["plugins/amazon.com/<br/>amazon.com_sync.json<br/>agent-driven sync: newest date pushed"]
         cosexports["plugins/costco.com/<br/>costco-receipts-*.json<br/>your Costco-Receipt-Downloader exports"]
         cosorders["plugins/costco.com/<br/>costco.com_order_data.json<br/>merged receipts (mode 600)"]
     end
@@ -277,6 +280,8 @@ flowchart LR
     reviewpy["core/review.py"] <--> results & amzcats
     reviewpy --> approved
     pushpy["core/push.py"] <--> approved & pushed
+    syncpy["core/sync.py"] <--> results & amzcats & mark
+    syncpy --> approved & cats
     catpy["core/categorize.py"] <--> amzcats
     sdk["plugins/plugin.py<br/>load_own_prefs / save_own_prefs"] <--> amzprefs
     ps["core/plugin_settings.py<br/>shared settings"] --> sdk
