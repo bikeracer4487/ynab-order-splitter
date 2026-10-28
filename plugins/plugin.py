@@ -66,7 +66,9 @@ class VendorPlugin(ABC):
     approved_path: the plugin's own <plugin_name>_ynab_approved.json, the
     approved transactions queued to be written to YNAB. And pushed_path:
     the plugin's own <plugin_name>_ynab_pushed.json, the ids of the
-    transactions pushed to YNAB.
+    transactions pushed to YNAB. And sync_path: the plugin's own
+    <plugin_name>_sync.json, the agent-driven sync's mark of the newest
+    transaction written to YNAB (core/sync.py).
     """
 
     name: str
@@ -77,6 +79,7 @@ class VendorPlugin(ABC):
     matched_path: Path
     approved_path: Path
     pushed_path: Path
+    sync_path: Path
     default_prefs: dict[str, Any] = {}  # plugin-specific prefs only
     # Whether get_data_from_vendor() is a real scraper core can call
     # automatically, vs. the default no-op that just raises

@@ -30,6 +30,9 @@ plugins/*/*_ynab_approved.json
 # Each plugin's ids of transactions pushed to YNAB, skipped by nonsplit matching (core/push.py)
 plugins/*/*_ynab_pushed.json
 
+# Each plugin's mark of the newest transaction the agent-driven sync wrote to YNAB (core/sync.py)
+plugins/*/*_sync.json
+
 # Each plugin's item -> category table (core/review.py) -- built from order data
 plugins/*/*_categories.json
 

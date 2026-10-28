@@ -37,7 +37,7 @@ class FakeTransaction:
 class FakePlugin:
     name = "amazon.com"
     scrapes_vendor_data = False
-    matched_path = pushed_path = None  # tests set a tmp path
+    matched_path = pushed_path = approved_path = categories_path = sync_path = None  # tests set a tmp path
 
     def __init__(self, prefs=None, vendor_transactions=None, scrape_error=None, match_error=None):
         self._prefs = prefs or {}
