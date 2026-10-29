@@ -1,0 +1,121 @@
+{
+  "downloaded_at": "2026-10-27T18:00:00.000Z",
+  "history": [
+    {
+      "version": 1,
+      "id": "20000000000000000006",
+      "displayId": null,
+      "isInStore": true,
+      "itemCount": 1,
+      "orderDate": "2026-10-26T08:00:00-06:00",
+      "type": "IN_STORE",
+      "title": "purchase",
+      "groups": [
+        {
+          "type": "IN_STORE",
+          "orderId": "20000000000000000006",
+          "items": [
+            {
+              "id": "0",
+              "quantity": 1,
+              "name": "coffee"
+            }
+          ]
+        }
+      ],
+      "priceDetails": {
+        "orderTotal": {
+          "displayValue": "$8.54",
+          "value": 8.54
+        },
+        "subTotal": null
+      },
+      "paymentMethods": []
+    }
+  ],
+  "details": {
+    "20000000000000000006": {
+      "data": {
+        "order": {
+          "id": "20000000000000000006",
+          "version": 1,
+          "type": "IN_STORE",
+          "orderDate": "2026-10-26T08:00:00.000-0600",
+          "isExchange": false,
+          "displayId": "2000-0000-0000-0000-0006",
+          "title": "purchase",
+          "timezone": "America/Denver",
+          "itemCount": 1,
+          "groups_2101": [
+            {
+              "fulfillmentType": "IN_STORE",
+              "status": {
+                "statusType": "IN_STORE"
+              },
+              "id": "0",
+              "itemCount": 1,
+              "items": [
+                {
+                  "id": "7",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Folgers Coffee, 12 oz",
+                    "usItemId": "10000007",
+                    "offerId": "OFFER7",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$7.98",
+                      "value": 7.98
+                    }
+                  },
+                  "addOns": []
+                }
+              ],
+              "isComplete": true,
+              "categories": []
+            }
+          ],
+          "priceDetails": {
+            "subTotal": {
+              "label": "Subtotal (1 items)",
+              "value": 7.98,
+              "displayValue": "$7.98",
+              "info": null
+            },
+            "taxTotal": {
+              "label": "Taxes",
+              "value": 0.56,
+              "displayValue": "$0.56",
+              "info": null
+            },
+            "grandTotal": {
+              "label": "Total",
+              "value": 8.54,
+              "displayValue": "$8.54",
+              "info": null
+            },
+            "fees": [],
+            "discounts": [],
+            "donations": [],
+            "refund": null
+          },
+          "paymentMethods": [
+            {
+              "description": "WMVISA ending in 0000",
+              "cardType": "WMVISA",
+              "paymentType": "CREDITCARD"
+            }
+          ],
+          "actions": {
+            "return": true
+          },
+          "refundPaymentMethods": []
+        }
+      }
+    }
+  }
+}

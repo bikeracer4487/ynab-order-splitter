@@ -75,3 +75,7 @@ ynabuddy.log
 # real order data / personal notes, never committed
 plugins/costco.com/costco-receipts-*.json
 plugins/costco.com/COSTCO PLUGIN PLAN.md
+
+# Target and Walmart receipt downloads (plugins/<vendor>/download_receipts.js) -- real order data
+plugins/target.com/target-receipts-*.json
+plugins/walmart.com/walmart-receipts-*.json

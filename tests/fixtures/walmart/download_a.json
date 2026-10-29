@@ -1,0 +1,606 @@
+{
+  "downloaded_at": "2026-10-24T18:00:00.000Z",
+  "history": [
+    {
+      "version": 1,
+      "id": "20000000000000000001",
+      "displayId": null,
+      "isInStore": true,
+      "itemCount": 2,
+      "orderDate": "2026-10-18T23:30:00-06:00",
+      "type": "IN_STORE",
+      "title": "purchase",
+      "groups": [
+        {
+          "type": "IN_STORE",
+          "orderId": "20000000000000000001",
+          "items": [
+            {
+              "id": "0",
+              "quantity": 1,
+              "name": "milk"
+            },
+            {
+              "id": "1",
+              "quantity": 1,
+              "name": "towels"
+            }
+          ]
+        }
+      ],
+      "priceDetails": {
+        "orderTotal": {
+          "displayValue": "$17.12",
+          "value": 17.12
+        },
+        "subTotal": null
+      },
+      "paymentMethods": []
+    },
+    {
+      "version": 1,
+      "id": "20000000000000000002",
+      "displayId": null,
+      "isInStore": true,
+      "itemCount": 1,
+      "orderDate": "2026-10-21T10:00:00-06:00",
+      "type": "IN_STORE",
+      "title": "purchase",
+      "groups": [
+        {
+          "type": "IN_STORE",
+          "orderId": "20000000000000000002",
+          "items": [
+            {
+              "id": "0",
+              "quantity": 1,
+              "name": "dog chow"
+            }
+          ]
+        }
+      ],
+      "priceDetails": {
+        "orderTotal": {
+          "displayValue": "$24.98",
+          "value": 24.98
+        },
+        "subTotal": null
+      },
+      "paymentMethods": []
+    },
+    {
+      "version": 1,
+      "id": "20000000000000000003",
+      "displayId": null,
+      "isInStore": true,
+      "itemCount": 1,
+      "orderDate": "2026-10-21T18:00:00-06:00",
+      "type": "IN_STORE",
+      "title": "purchase",
+      "groups": [
+        {
+          "type": "IN_STORE",
+          "orderId": "20000000000000000003",
+          "items": [
+            {
+              "id": "0",
+              "quantity": 1,
+              "name": "litter"
+            }
+          ]
+        }
+      ],
+      "priceDetails": {
+        "orderTotal": {
+          "displayValue": "$24.98",
+          "value": 24.98
+        },
+        "subTotal": null
+      },
+      "paymentMethods": []
+    },
+    {
+      "version": 1,
+      "id": "20000000000000000004",
+      "displayId": null,
+      "isInStore": true,
+      "itemCount": 1,
+      "orderDate": "2026-10-23T12:00:00-06:00",
+      "type": "IN_STORE",
+      "title": "purchase",
+      "groups": [
+        {
+          "type": "IN_STORE",
+          "orderId": "20000000000000000004",
+          "items": [
+            {
+              "id": "0",
+              "quantity": 1,
+              "name": "gift bag"
+            }
+          ]
+        }
+      ],
+      "priceDetails": {
+        "orderTotal": {
+          "displayValue": "$10.00",
+          "value": 10.0
+        },
+        "subTotal": null
+      },
+      "paymentMethods": []
+    },
+    {
+      "version": 1,
+      "id": "20000000000000000005",
+      "displayId": null,
+      "isInStore": false,
+      "itemCount": 1,
+      "orderDate": "2026-10-24T09:00:00-06:00",
+      "type": "DELIVERY",
+      "title": "purchase",
+      "groups": [
+        {
+          "type": "DELIVERY",
+          "orderId": "20000000000000000005",
+          "items": [
+            {
+              "id": "0",
+              "quantity": 1,
+              "name": "patio chair"
+            }
+          ]
+        }
+      ],
+      "priceDetails": {
+        "orderTotal": {
+          "displayValue": "$30.00",
+          "value": 30.0
+        },
+        "subTotal": null
+      },
+      "paymentMethods": []
+    }
+  ],
+  "details": {
+    "20000000000000000001": {
+      "data": {
+        "order": {
+          "id": "20000000000000000001",
+          "version": 1,
+          "type": "IN_STORE",
+          "orderDate": "2026-10-18T23:30:00.000-0600",
+          "isExchange": false,
+          "displayId": "2000-0000-0000-0000-0001",
+          "title": "purchase",
+          "timezone": "America/Denver",
+          "itemCount": 2,
+          "groups_2101": [
+            {
+              "fulfillmentType": "IN_STORE",
+              "status": {
+                "statusType": "IN_STORE"
+              },
+              "id": "0",
+              "itemCount": 2,
+              "items": [
+                {
+                  "id": "1",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Great Value 2% Reduced Fat Milk, 1 gal",
+                    "usItemId": "10000001",
+                    "offerId": "OFFER1",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$3.12",
+                      "value": 3.12
+                    }
+                  },
+                  "addOns": []
+                },
+                {
+                  "id": "2",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Bounty Paper Towels &amp; More, 6 Rolls ",
+                    "usItemId": "10000002",
+                    "offerId": "OFFER2",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$12.97",
+                      "value": 12.97
+                    }
+                  },
+                  "addOns": []
+                }
+              ],
+              "isComplete": true,
+              "categories": []
+            }
+          ],
+          "priceDetails": {
+            "subTotal": {
+              "label": "Subtotal (2 items)",
+              "value": 16.09,
+              "displayValue": "$16.09",
+              "info": null
+            },
+            "taxTotal": {
+              "label": "Taxes",
+              "value": 1.03,
+              "displayValue": "$1.03",
+              "info": null
+            },
+            "grandTotal": {
+              "label": "Total",
+              "value": 17.12,
+              "displayValue": "$17.12",
+              "info": null
+            },
+            "fees": [],
+            "discounts": [],
+            "donations": [],
+            "refund": null
+          },
+          "paymentMethods": [
+            {
+              "description": "WMMASTERCARD ending in 0000",
+              "cardType": "WMMASTERCARD",
+              "paymentType": "CREDITCARD"
+            }
+          ],
+          "actions": {
+            "return": true
+          },
+          "refundPaymentMethods": []
+        }
+      }
+    },
+    "20000000000000000002": {
+      "data": {
+        "order": {
+          "id": "20000000000000000002",
+          "version": 1,
+          "type": "IN_STORE",
+          "orderDate": "2026-10-21T10:00:00.000-0600",
+          "isExchange": false,
+          "displayId": "2000-0000-0000-0000-0002",
+          "title": "purchase",
+          "timezone": "America/Denver",
+          "itemCount": 1,
+          "groups_2101": [
+            {
+              "fulfillmentType": "IN_STORE",
+              "status": {
+                "statusType": "IN_STORE"
+              },
+              "id": "0",
+              "itemCount": 1,
+              "items": [
+                {
+                  "id": "3",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Purina Dog Chow, 40 lb",
+                    "usItemId": "10000003",
+                    "offerId": "OFFER3",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$24.98",
+                      "value": 24.98
+                    }
+                  },
+                  "addOns": []
+                }
+              ],
+              "isComplete": true,
+              "categories": []
+            }
+          ],
+          "priceDetails": {
+            "subTotal": {
+              "label": "Subtotal (1 items)",
+              "value": 24.98,
+              "displayValue": "$24.98",
+              "info": null
+            },
+            "taxTotal": {
+              "label": "Taxes",
+              "value": 0.0,
+              "displayValue": "$0.00",
+              "info": null
+            },
+            "grandTotal": {
+              "label": "Total",
+              "value": 24.98,
+              "displayValue": "$24.98",
+              "info": null
+            },
+            "fees": [],
+            "discounts": [],
+            "donations": [],
+            "refund": null
+          },
+          "paymentMethods": [
+            {
+              "description": "WMMASTERCARD ending in 0000",
+              "cardType": "WMMASTERCARD",
+              "paymentType": "CREDITCARD"
+            }
+          ],
+          "actions": {
+            "return": true
+          },
+          "refundPaymentMethods": []
+        }
+      }
+    },
+    "20000000000000000003": {
+      "data": {
+        "order": {
+          "id": "20000000000000000003",
+          "version": 1,
+          "type": "IN_STORE",
+          "orderDate": "2026-10-21T18:00:00.000-0600",
+          "isExchange": false,
+          "displayId": "2000-0000-0000-0000-0003",
+          "title": "purchase",
+          "timezone": "America/Denver",
+          "itemCount": 1,
+          "groups_2101": [
+            {
+              "fulfillmentType": "IN_STORE",
+              "status": {
+                "statusType": "IN_STORE"
+              },
+              "id": "0",
+              "itemCount": 1,
+              "items": [
+                {
+                  "id": "4",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Tidy Cats Litter, 20 lb",
+                    "usItemId": "10000004",
+                    "offerId": "OFFER4",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$23.48",
+                      "value": 23.48
+                    }
+                  },
+                  "addOns": []
+                }
+              ],
+              "isComplete": true,
+              "categories": []
+            }
+          ],
+          "priceDetails": {
+            "subTotal": {
+              "label": "Subtotal (1 items)",
+              "value": 23.48,
+              "displayValue": "$23.48",
+              "info": null
+            },
+            "taxTotal": {
+              "label": "Taxes",
+              "value": 1.5,
+              "displayValue": "$1.50",
+              "info": null
+            },
+            "grandTotal": {
+              "label": "Total",
+              "value": 24.98,
+              "displayValue": "$24.98",
+              "info": null
+            },
+            "fees": [],
+            "discounts": [],
+            "donations": [],
+            "refund": null
+          },
+          "paymentMethods": [
+            {
+              "description": "WMMASTERCARD ending in 0000",
+              "cardType": "WMMASTERCARD",
+              "paymentType": "CREDITCARD"
+            }
+          ],
+          "actions": {
+            "return": true
+          },
+          "refundPaymentMethods": []
+        }
+      }
+    },
+    "20000000000000000004": {
+      "data": {
+        "order": {
+          "id": "20000000000000000004",
+          "version": 1,
+          "type": "IN_STORE",
+          "orderDate": "2026-10-23T12:00:00.000-0600",
+          "isExchange": false,
+          "displayId": "2000-0000-0000-0000-0004",
+          "title": "purchase",
+          "timezone": "America/Denver",
+          "itemCount": 1,
+          "groups_2101": [
+            {
+              "fulfillmentType": "IN_STORE",
+              "status": {
+                "statusType": "IN_STORE"
+              },
+              "id": "0",
+              "itemCount": 1,
+              "items": [
+                {
+                  "id": "5",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Gift Bag",
+                    "usItemId": "10000005",
+                    "offerId": "OFFER5",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$10.00",
+                      "value": 10.0
+                    }
+                  },
+                  "addOns": []
+                }
+              ],
+              "isComplete": true,
+              "categories": []
+            }
+          ],
+          "priceDetails": {
+            "subTotal": {
+              "label": "Subtotal (1 items)",
+              "value": 10.0,
+              "displayValue": "$10.00",
+              "info": null
+            },
+            "taxTotal": {
+              "label": "Taxes",
+              "value": 0.0,
+              "displayValue": "$0.00",
+              "info": null
+            },
+            "grandTotal": {
+              "label": "Total",
+              "value": 10.0,
+              "displayValue": "$10.00",
+              "info": null
+            },
+            "fees": [],
+            "discounts": [],
+            "donations": [],
+            "refund": null
+          },
+          "paymentMethods": [
+            {
+              "description": "GIFTCARD ending in 0000",
+              "cardType": "GIFTCARD",
+              "paymentType": "CREDITCARD"
+            },
+            {
+              "description": "WMMASTERCARD ending in 0000",
+              "cardType": "WMMASTERCARD",
+              "paymentType": "CREDITCARD"
+            }
+          ],
+          "actions": {
+            "return": true
+          },
+          "refundPaymentMethods": []
+        }
+      }
+    },
+    "20000000000000000005": {
+      "data": {
+        "order": {
+          "id": "20000000000000000005",
+          "version": 1,
+          "type": "DELIVERY",
+          "orderDate": "2026-10-24T09:00:00.000-0600",
+          "isExchange": false,
+          "displayId": "2000-0000-0000-0000-0005",
+          "title": "purchase",
+          "timezone": "America/Denver",
+          "itemCount": 1,
+          "groups_2101": [
+            {
+              "fulfillmentType": "DELIVERY",
+              "status": {
+                "statusType": "DELIVERY"
+              },
+              "id": "0",
+              "itemCount": 1,
+              "items": [
+                {
+                  "id": "6",
+                  "quantity": 1,
+                  "requestedWeight": null,
+                  "productInfo": {
+                    "name": "Patio Chair",
+                    "usItemId": "10000006",
+                    "offerId": "OFFER6",
+                    "isAlcohol": false,
+                    "salesUnitType": "EACH"
+                  },
+                  "priceInfo": {
+                    "linePrice": {
+                      "displayValue": "$30.00",
+                      "value": 30.0
+                    }
+                  },
+                  "addOns": []
+                }
+              ],
+              "isComplete": true,
+              "categories": []
+            }
+          ],
+          "priceDetails": {
+            "subTotal": {
+              "label": "Subtotal (1 items)",
+              "value": 30.0,
+              "displayValue": "$30.00",
+              "info": null
+            },
+            "taxTotal": {
+              "label": "Taxes",
+              "value": 0.0,
+              "displayValue": "$0.00",
+              "info": null
+            },
+            "grandTotal": {
+              "label": "Total",
+              "value": 30.0,
+              "displayValue": "$30.00",
+              "info": null
+            },
+            "fees": [],
+            "discounts": [],
+            "donations": [],
+            "refund": null
+          },
+          "paymentMethods": [
+            {
+              "description": "WMMASTERCARD ending in 0000",
+              "cardType": "WMMASTERCARD",
+              "paymentType": "CREDITCARD"
+            }
+          ],
+          "actions": {
+            "return": true
+          },
+          "refundPaymentMethods": []
+        }
+      }
+    }
+  }
+}

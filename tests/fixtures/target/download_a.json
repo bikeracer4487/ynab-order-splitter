@@ -1,0 +1,391 @@
+{
+  "downloaded_at": "2026-10-24T12:00:00.000Z",
+  "history": [
+    {
+      "total_orders": 4,
+      "total_pages": 1,
+      "orders": [
+        {
+          "placed_date": "2026-10-20T21:15:00-04:00",
+          "order_type": "STORES",
+          "summary": {
+            "grand_total": "18.52"
+          },
+          "address": [
+            {
+              "type": "STORE",
+              "store_id": "1234"
+            }
+          ],
+          "order_lines": [],
+          "order_purchase_type": "STORE",
+          "store_receipt_id": "1111-2222-3333-0001",
+          "store_id": "1234",
+          "is_more_lines": true
+        },
+        {
+          "placed_date": "2026-10-22T18:30:00-04:00",
+          "order_type": "STORES",
+          "summary": {
+            "grand_total": "18.52"
+          },
+          "address": [
+            {
+              "type": "STORE",
+              "store_id": "1234"
+            }
+          ],
+          "order_lines": [],
+          "order_purchase_type": "STORE",
+          "store_receipt_id": "1111-2222-3333-0004",
+          "store_id": "1234",
+          "is_more_lines": true
+        },
+        {
+          "placed_date": "2026-10-22T10:00:00-04:00",
+          "order_type": "STORES",
+          "summary": {
+            "grand_total": "18.52"
+          },
+          "address": [
+            {
+              "type": "STORE",
+              "store_id": "1234"
+            }
+          ],
+          "order_lines": [],
+          "order_purchase_type": "STORE",
+          "store_receipt_id": "1111-2222-3333-0002",
+          "store_id": "1234",
+          "is_more_lines": true
+        },
+        {
+          "placed_date": "2026-10-23T12:00:00-04:00",
+          "order_type": "STORES",
+          "summary": {
+            "grand_total": "5.35"
+          },
+          "address": [
+            {
+              "type": "STORE",
+              "store_id": "1234"
+            }
+          ],
+          "order_lines": [],
+          "order_purchase_type": "STORE",
+          "store_receipt_id": "1111-2222-3333-0003",
+          "store_id": "1234",
+          "is_more_lines": true
+        }
+      ],
+      "request": {
+        "page_number": 1,
+        "page_size": 10,
+        "order_purchase_type": "STORE"
+      }
+    }
+  ],
+  "receipts": {
+    "1111-2222-3333-0001": {
+      "store_receipt_id": "1111-2222-3333-0001",
+      "store_id": "1234",
+      "order_type": "STORES",
+      "order_placed_source": "STORES",
+      "order_date": "2026-10-21T01:15:00.000Z",
+      "packages": [
+        {
+          "grouping_metadata": {
+            "status": "STAT_REFUND_ISSUED"
+          },
+          "order_lines": [
+            {
+              "order_line_id": "line-58588346",
+              "quantity": 2,
+              "item": {
+                "tcin": "12345678",
+                "description": "Good &#38; Gather&#8482; Organic Bananas - 2lb ",
+                "unit_price": "1.99",
+                "list_price": "1.99",
+                "dpci": "123-45-6789"
+              },
+              "line_type": "GROCERY",
+              "return_orders": [
+                {
+                  "order_number": "10000000000000001",
+                  "status_key": "STAT_REFUND_ISSUED",
+                  "quantity": 2,
+                  "total_refunded_amount": "3.99",
+                  "placed_date": "2026-10-24T03:30:00.000Z"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "grouping_metadata": {
+            "status": "STAT_STORE_PURCHASE"
+          },
+          "order_lines": [
+            {
+              "order_line_id": "line-38544621",
+              "quantity": 1,
+              "item": {
+                "tcin": "12345678",
+                "description": "Market Pantry Whole Milk - 1gal",
+                "unit_price": "3.49",
+                "list_price": "3.49",
+                "dpci": "123-45-6789"
+              },
+              "line_type": "GROCERY"
+            },
+            {
+              "order_line_id": "line-15746920",
+              "quantity": 1,
+              "item": {
+                "tcin": "12345678",
+                "description": "up&#38;up Paper Towels - 6 Rolls",
+                "unit_price": "10.99",
+                "list_price": "10.99",
+                "dpci": "123-45-6789"
+              },
+              "line_type": "REGULARITEM"
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "total_adjustments": 0.92,
+        "total_product_price": 18.46,
+        "total_taxes": 0.98,
+        "grand_total": 18.52,
+        "saved_redcard_discount": "0.92",
+        "saved_cartwheel_discount": "0.00",
+        "adjustments": [
+          {
+            "promo_id": "100000001",
+            "promo_description": "Target Circle Card 5%",
+            "promo_group": "PROMOTION",
+            "promo_value": 0.92
+          }
+        ]
+      },
+      "addresses": [
+        {
+          "type": "STORE",
+          "store_id": "1234"
+        }
+      ],
+      "payments": [
+        {
+          "amount": 18.52,
+          "card_number": "0000",
+          "payment_type": "TARGETMASTERCARD",
+          "payment_subtype": "NONE",
+          "guest_display_payment_type": "Targetmastercard",
+          "paid_by_wallet": false
+        }
+      ],
+      "related_gift_card_orders": []
+    },
+    "1111-2222-3333-0002": {
+      "store_receipt_id": "1111-2222-3333-0002",
+      "store_id": "1234",
+      "order_type": "STORES",
+      "order_placed_source": "STORES",
+      "order_date": "2026-10-22T14:00:00.000Z",
+      "packages": [
+        {
+          "grouping_metadata": {
+            "status": "STAT_STORE_PURCHASE"
+          },
+          "order_lines": [
+            {
+              "order_line_id": "line-61403574",
+              "quantity": 1,
+              "item": {
+                "tcin": "12345678",
+                "description": "Cat Litter - 20lb",
+                "unit_price": "17.49",
+                "list_price": "17.49",
+                "dpci": "123-45-6789"
+              },
+              "line_type": "REGULARITEM"
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "total_adjustments": 0.87,
+        "total_product_price": 17.49,
+        "total_taxes": 1.9,
+        "grand_total": 18.52,
+        "saved_redcard_discount": "0.87",
+        "saved_cartwheel_discount": "0.00",
+        "adjustments": [
+          {
+            "promo_id": "100000001",
+            "promo_description": "Target Circle Card 5%",
+            "promo_group": "PROMOTION",
+            "promo_value": 0.87
+          }
+        ]
+      },
+      "addresses": [
+        {
+          "type": "STORE",
+          "store_id": "1234"
+        }
+      ],
+      "payments": [
+        {
+          "amount": 18.52,
+          "card_number": "0000",
+          "payment_type": "TARGETMASTERCARD",
+          "payment_subtype": "NONE",
+          "guest_display_payment_type": "Targetmastercard",
+          "paid_by_wallet": false
+        }
+      ],
+      "related_gift_card_orders": []
+    },
+    "1111-2222-3333-0003": {
+      "store_receipt_id": "1111-2222-3333-0003",
+      "store_id": "1234",
+      "order_type": "STORES",
+      "order_placed_source": "STORES",
+      "order_date": "2026-10-23T16:00:00.000Z",
+      "packages": [
+        {
+          "grouping_metadata": {
+            "status": "STAT_STORE_PURCHASE"
+          },
+          "order_lines": [
+            {
+              "order_line_id": "line-15611317",
+              "quantity": 1,
+              "item": {
+                "tcin": "12345678",
+                "description": "Gift Wrap - 3pk",
+                "unit_price": "5.00",
+                "list_price": "5.00",
+                "dpci": "123-45-6789"
+              },
+              "line_type": "REGULARITEM"
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "total_adjustments": 0.0,
+        "total_product_price": 5.0,
+        "total_taxes": 0.35,
+        "grand_total": 5.35,
+        "saved_redcard_discount": "0.00",
+        "saved_cartwheel_discount": "0.00",
+        "adjustments": [
+          {
+            "promo_id": "100000001",
+            "promo_description": "Target Circle Card 5%",
+            "promo_group": "PROMOTION",
+            "promo_value": 0.0
+          }
+        ]
+      },
+      "addresses": [
+        {
+          "type": "STORE",
+          "store_id": "1234"
+        }
+      ],
+      "payments": [
+        {
+          "amount": 2.0,
+          "card_number": "0000",
+          "payment_type": "GIFTCARD",
+          "payment_subtype": "NONE",
+          "guest_display_payment_type": "Giftcard",
+          "paid_by_wallet": false
+        },
+        {
+          "amount": 3.35,
+          "card_number": "0000",
+          "payment_type": "TARGETMASTERCARD",
+          "payment_subtype": "NONE",
+          "guest_display_payment_type": "Targetmastercard",
+          "paid_by_wallet": false
+        }
+      ],
+      "related_gift_card_orders": []
+    },
+    "1111-2222-3333-0004": {
+      "store_receipt_id": "1111-2222-3333-0004",
+      "store_id": "1234",
+      "order_type": "STORES",
+      "order_placed_source": "STORES",
+      "order_date": "2026-10-22T22:30:00.000Z",
+      "packages": [
+        {
+          "grouping_metadata": {
+            "status": "STAT_REFUND_ISSUED"
+          },
+          "order_lines": [
+            {
+              "order_line_id": "line-87450172",
+              "quantity": 1,
+              "item": {
+                "tcin": "12345678",
+                "description": "LED Bulbs - 4pk",
+                "unit_price": "16.99",
+                "list_price": "16.99",
+                "dpci": "123-45-6789"
+              },
+              "line_type": "REGULARITEM",
+              "return_orders": [
+                {
+                  "order_number": "10000000000000001",
+                  "status_key": "STAT_REFUND_ISSUED",
+                  "quantity": 1,
+                  "total_refunded_amount": "18.52",
+                  "placed_date": "2026-10-24T03:30:00.000Z"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "total_adjustments": 0.85,
+        "total_product_price": 16.99,
+        "total_taxes": 2.38,
+        "grand_total": 18.52,
+        "saved_redcard_discount": "0.85",
+        "saved_cartwheel_discount": "0.00",
+        "adjustments": [
+          {
+            "promo_id": "100000001",
+            "promo_description": "Target Circle Card 5%",
+            "promo_group": "PROMOTION",
+            "promo_value": 0.85
+          }
+        ]
+      },
+      "addresses": [
+        {
+          "type": "STORE",
+          "store_id": "1234"
+        }
+      ],
+      "payments": [
+        {
+          "amount": 18.52,
+          "card_number": "0000",
+          "payment_type": "TARGETMASTERCARD",
+          "payment_subtype": "NONE",
+          "guest_display_payment_type": "Targetmastercard",
+          "paid_by_wallet": false
+        }
+      ],
+      "related_gift_card_orders": []
+    }
+  }
+}

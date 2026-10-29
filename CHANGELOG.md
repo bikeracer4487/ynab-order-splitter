@@ -3,6 +3,27 @@
 ## Unreleased
 
 ### Added
+- **Target plugin** -- matches Target in-store receipts. Target refuses to
+  sign in a browser under automation, so nothing is scraped: you paste
+  `plugins/target.com/download_receipts.js` into the browser console on
+  target.com/orders while signed in, and it saves your purchase history
+  and each receipt's items, as the page itself fetches them, to
+  `target-receipts-<DATE>.json`; drop that into `plugins/target.com/`.
+  Downloads merge into `target.com_order_data.json` like Costco exports.
+  A receipt is dated on the store's local day, lines are priced at unit
+  price times quantity (returned lines included, since they were paid
+  for), and the Target Circle Card discount is spread over the items by
+  the usual split. A return is offered as an inflow on the day it was
+  made, with the lines returned together and what Target refunded for
+  each. Receipts paid with more than one tender are skipped.
+- **Walmart plugin** -- matches Walmart in-store purchases the same way:
+  `plugins/walmart.com/download_receipts.js`, pasted into the console on
+  walmart.com/orders, records the purchase list the page shows and each
+  purchase's items with the page's own order request (Walmart refuses the
+  same request made any other way), and saves
+  `walmart-receipts-<DATE>.json` for `plugins/walmart.com/`. Only in-store
+  purchases are matched; a walmart.com order's detail, if the page loaded
+  one, is left out. Purchases paid with more than one tender are skipped.
 - **Memos: order number and item names** -- a fourth choice under
   Settings > Memos puts the order number on the transaction and each
   item's name on its split line; a one-line transaction gets

@@ -37,6 +37,8 @@ flowchart TD
         sdk["plugin.py<br/>VendorPlugin SDK"]
         amz["amazon.com/plugin.py"]
         cos["costco.com/plugin.py"]
+        tgt["target.com/plugin.py"]
+        wmt["walmart.com/plugin.py"]
     end
 
     main --> agents & config & match & ps & push & wizard & ui & prefs & yc & orch
@@ -49,9 +51,11 @@ flowchart TD
     push --> ui & prefs & mu & yc
     ps --> config & ui & prefs & yc & mu & orch & sdk
     orch --> sdk
-    orch -. "loads by file path" .-> amz & cos
+    orch -. "loads by file path" .-> amz & cos & tgt & wmt
     amz --> sdk & config & ui & mu
     cos --> sdk & mu
+    tgt --> sdk & mu
+    wmt --> sdk & mu
 
     yc --> ynabsdk[["ynab SDK"]]
     amz --> amzlib[["amazon-orders"]]
@@ -265,6 +269,10 @@ flowchart LR
         mark["plugins/amazon.com/<br/>amazon.com_sync.json<br/>agent-driven sync: newest date pushed"]
         cosexports["plugins/costco.com/<br/>costco-receipts-*.json<br/>your Costco-Receipt-Downloader exports"]
         cosorders["plugins/costco.com/<br/>costco.com_order_data.json<br/>merged receipts (mode 600)"]
+        tgtdownloads["plugins/target.com/<br/>target-receipts-*.json<br/>your download_receipts.js downloads"]
+        tgtorders["plugins/target.com/<br/>target.com_order_data.json<br/>merged receipts (mode 600)"]
+        wmtdownloads["plugins/walmart.com/<br/>walmart-receipts-*.json<br/>your download_receipts.js downloads"]
+        wmtorders["plugins/walmart.com/<br/>walmart.com_order_data.json<br/>merged in-store purchases (mode 600)"]
     end
 
     subgraph other["Logs and debug output"]
@@ -292,6 +300,10 @@ flowchart LR
     amz --> amzlib
     cos["costco.com/plugin.py"] <--> cosorders
     cosexports --> cos
+    tgt["target.com/plugin.py"] <--> tgtorders
+    tgtdownloads --> tgt
+    wmt["walmart.com/plugin.py"] <--> wmtorders
+    wmtdownloads --> wmt
 ```
 
 Matching uses the Amazon charges first; an order's `grand_total` is only

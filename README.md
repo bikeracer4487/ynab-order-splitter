@@ -1,6 +1,6 @@
 # YNABuddy
 
-Console app that matches vendor order data (i.e. Amazon, Costco) to
+Console app that matches vendor order data (i.e. Amazon, Costco, Target, Walmart) to
 [YNAB](https://www.ynab.com) transactions, splits each transaction by the items bought, helps you categorize the lines, and writes the approved splits back to YNAB.
 
 What it does today (v1.2.1; changes in `CHANGELOG.md`):
@@ -12,8 +12,14 @@ What it does today (v1.2.1; changes in `CHANGELOG.md`):
   [Costco-Receipt-Downloader](https://github.com/harrykhh/Costco-Receipt-Downloader)
   into `plugins/costco.com/` (no scraping; gas and costco.com charges have
   no receipt there and won't match).
+- **Target and Walmart data**: reads in-store receipts you download
+  yourself with `plugins/target.com/download_receipts.js` and
+  `plugins/walmart.com/download_receipts.js`, pasted into the browser
+  console on the store's orders page while signed in (both stores refuse
+  to sign in a browser under automation, so there is no scraping; their
+  online orders have no receipt there and won't match).
 - **Matching**: each YNAB transaction is matched to an Amazon charge or
-  order, or a Costco receipt, by exact amount and date.
+  order, or a Costco, Target or Walmart receipt, by exact amount and date.
 - **Splitting**: the charged amount is split across the items; shipping,
   discounts and rounding are spread over the items (sales tax on its own
   line is an option, off by default).
@@ -42,8 +48,8 @@ Docs: code diagrams `DIAGRAM.md`; release notes `CHANGELOG.md`.
 ## Running
 
 Needs [uv](https://docs.astral.sh/uv/) (it installs the right Python and the
-dependencies), a YNAB personal access token, and an Amazon account and/or
-Costco receipt exports.
+dependencies), a YNAB personal access token, and an Amazon account, Costco
+receipt exports and/or Target or Walmart receipt downloads.
 
 ```
 uv sync
@@ -62,7 +68,11 @@ in there, and the session is saved for later runs; no Amazon password is
 stored). For Costco, save each
 Costco-Receipt-Downloader export (`costco-receipts-<FROM>_to_<TO>.json`)
 into `plugins/costco.com/`; new exports are merged into what's already
-there. Changing the budget later clears the
+there. For Target and Walmart, sign in at target.com/orders or
+walmart.com/orders, paste that plugin's `download_receipts.js` into the
+browser console (the file's header walks you through it) and save the
+downloaded `target-receipts-<DATE>.json` or `walmart-receipts-<DATE>.json`
+into the plugin's folder; downloads merge the same way. Changing the budget later clears the
 plugin accounts and asks for the new budget's.
 
 ## Letting Claude Code run it
@@ -107,7 +117,9 @@ All per-install and gitignored:
 - Data: `core/ynab_categories.json` (the budget's categories),
   `plugins/amazon.com/amazon.com_order_data.json` (scraped orders and
   charges), `plugins/costco.com/costco.com_order_data.json` (merged Costco
-  receipts), `plugins/<plugin>/<plugin>_ynab_matched.json` (latest match
+  receipts), `plugins/target.com/target.com_order_data.json` and
+  `plugins/walmart.com/walmart.com_order_data.json` (merged Target and
+  Walmart receipts), `plugins/<plugin>/<plugin>_ynab_matched.json` (latest match
   results and review progress), `plugins/<plugin>/<plugin>_ynab_approved.json`
   (approved, waiting to be pushed), `plugins/<plugin>/<plugin>_ynab_pushed.json`
   (ids already pushed, which the all-transactions run mode skips),
